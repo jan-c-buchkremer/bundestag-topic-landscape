@@ -1,8 +1,9 @@
-"""landscape weeks | landscape build 2026-W28 [2026-W26 …] | landscape build --all"""
+"""landscape weeks | landscape build 2026-W28 [2026-W26 …] | landscape build --all | landscape serve"""
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -19,7 +20,16 @@ def main(argv: list[str] | None = None) -> None:
     b.add_argument("--out", type=Path, default=Path("data/out"))
     b.add_argument("--store", type=Path, default=Path("data/landscape.sqlite"), help="embedding cache")
     b.add_argument("--min-cluster-size", type=int, default=8)
+    sv = sub.add_parser("serve", help="dev server: pages are re-rendered from data/out/*.json on every request")
+    sv.add_argument("--out", type=Path, default=Path("data/out"))
+    sv.add_argument("--port", type=int, default=8000)
     args = p.parse_args(argv)
+
+    if args.cmd == "serve":
+        from landscape.serve import serve
+
+        serve(args.out, args.port)
+        return
 
     conn = corpus.connect()
     all_weeks = corpus.weeks(conn)
@@ -52,6 +62,7 @@ def main(argv: list[str] | None = None) -> None:
         for c in payload["clusters"]:
             print(f"  {c['id']:2} ({c['n']:3}) {', '.join(c['terms'])}")
         (args.out / f"{week}.html").write_text(build.render(payload), encoding="utf-8")
+        (args.out / f"{week}.json").write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
         summaries.append(build.summary(payload))
     if args.all:
         (args.out / "index.html").write_text(build.render_index(summaries), encoding="utf-8")

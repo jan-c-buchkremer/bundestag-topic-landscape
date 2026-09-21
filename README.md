@@ -20,6 +20,7 @@ export BDF_DB=/path/to/bundestag-data-foundation/data/bundestag.sqlite   # defau
 uv run landscape weeks                 # sitting weeks in the store, with sitting numbers and speech counts
 uv run landscape build 2026-W28        # → data/out/2026-W28.html
 uv run landscape build --all           # every week plus data/out/index.html
+uv run landscape serve                 # http://127.0.0.1:8000/ — re-renders pages from data/out/*.json on every request
 ```
 
 The first build downloads the embedding model (~1.1 GB) into the Hugging Face cache and embeds the week
@@ -27,7 +28,8 @@ The first build downloads the embedding model (~1.1 GB) into the Hugging Face ca
 `data/landscape.sqlite` by model and text hash, so rebuilding a week takes seconds and a model swap is a new
 cache key. The whole Wahlperiode (31 weeks) took about three hours on that machine.
 
-Open `data/out/index.html` in a browser (Plotly.js and the Inter font come from CDNs). Windows: `py -3.12 -m uv …`
+Open `data/out/index.html` in a browser, or run `landscape serve` while editing the template (Plotly.js and the
+Inter font come from CDNs). Windows: `py -3.12 -m uv …`
 works the same.
 
 ## What the pages show
