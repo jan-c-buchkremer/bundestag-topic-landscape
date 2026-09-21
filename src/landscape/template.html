@@ -27,34 +27,52 @@ header select { width: auto; }
 header .spacer { flex: 1; }
 header .help { color: var(--faint); font-size: 12.5px; }
 
-#layout { display: grid; grid-template-columns: 250px 1fr 390px; height: calc(100% - 52px); }
+#layout { display: grid; grid-template-columns: 270px 1fr 390px; height: calc(100% - 52px); }
 aside, #panel { background: var(--card); overflow-y: auto; }
-aside { border-right: 1px solid var(--line); padding: 18px 18px 24px; }
+aside { border-right: 1px solid var(--line); padding: 14px 16px 24px; }
 #panel { border-left: 1px solid var(--line); padding: 22px 24px 32px; }
 #map { min-width: 0; }
 
-.section { margin-bottom: 20px; }
-.section > .label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer; user-select: none; font-size: 12.5px; background: var(--card); transition: background .12s, border-color .12s; }
-.chip:hover { border-color: #cdcdc8; }
-.chip small { color: var(--faint); font-size: 11px; }
-.chip.off { color: var(--faint); background: transparent; border-style: dashed; }
-.chip.off .dot { opacity: .25; }
+.sidebar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.sidebar-head b { font-size: 13px; font-weight: 600; }
+#count { color: var(--muted); font-size: 12px; }
+.linkbtn { font-size: 12.5px; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; }
+.linkbtn:hover { text-decoration: underline; }
+
+.group { border-top: 1px solid var(--line); padding: 8px 0; }
+.group .title { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 3px 0; }
+.group .title .arrow { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--faint); transition: transform .2s; margin-left: auto; }
+.group.collapsed .title .arrow { transform: rotate(-90deg); }
+.group .title .badge { font-size: 10.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 0 6px; }
+.group .title .reload { font-size: 13px; color: var(--faint); cursor: pointer; padding: 0 2px; }
+.group .title .reload:hover { color: var(--text); }
+.group .content { padding-top: 4px; }
+.group.collapsed .content { display: none; }
+.list { max-height: 264px; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+.item { display: flex; align-items: center; gap: 7px; padding: 3px 4px; border-radius: 6px; cursor: pointer; font-size: 12.5px; line-height: 1.35; }
+.item:hover { background: var(--bg); }
+.item input { margin: 0; accent-color: var(--accent); flex: none; }
+.item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .n { color: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+.item.zero { opacity: .45; }
+.item .x { color: var(--faint); font-size: 14px; line-height: 1; padding: 0 2px; }
+.item .x:hover { color: var(--text); }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; display: inline-block; }
-.segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; background: var(--bg); border-radius: 8px; padding: 3px; }
-.segmented button { border: 0; background: transparent; border-radius: 6px; padding: 5px 6px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+
+.searchrow { display: flex; gap: 0; margin-bottom: 6px; }
+.searchrow input { flex: 1; min-width: 0; border-radius: 8px 0 0 8px; }
+.searchrow button { border: 1px solid var(--line); border-left: 0; background: var(--bg); color: var(--text); border-radius: 0 8px 8px 0; padding: 0 10px; font-size: 12.5px; cursor: pointer; }
+.searchrow button:hover { background: #ecece8; }
+.segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; background: var(--bg); border-radius: 8px; padding: 3px; margin-bottom: 6px; }
+.segmented button { border: 0; background: transparent; border-radius: 6px; padding: 5px 2px; font-size: 12px; color: var(--muted); cursor: pointer; }
 .segmented button.on { background: var(--card); color: var(--text); font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 select, input[type=text] { width: 100%; font: inherit; font-size: 12.5px; background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
 select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-.toggle { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; cursor: pointer; font-size: 12.5px; }
+.toggle { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; cursor: pointer; font-size: 12.5px; }
 .toggle input { appearance: none; width: 30px; height: 18px; border-radius: 999px; background: #d9d9d4; position: relative; cursor: pointer; margin: 0; transition: background .15s; flex: none; }
 .toggle input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
 .toggle input:checked { background: var(--accent); }
 .toggle input:checked::after { left: 14px; }
-#count { color: var(--muted); font-size: 12.5px; }
-.linkbtn { font-size: 12.5px; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; }
-.linkbtn:hover { text-decoration: underline; }
 
 #panel .hint { color: var(--muted); }
 #panel .hint kbd { font: inherit; font-size: 11.5px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; background: var(--bg); }
@@ -64,6 +82,7 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
 #panel p { margin: 0 0 10px; }
 #panel p.comment { color: var(--faint); font-style: italic; font-size: 12.5px; padding-left: 12px; border-left: 2px solid var(--line); }
 #panel p.chair { color: var(--muted); font-size: 12.5px; padding-left: 12px; border-left: 2px solid #cfd8ea; }
+#panel mark { background: #fff3a8; color: inherit; border-radius: 2px; }
 #panel h3 { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin: 20px 0 8px; }
 #panel table { border-collapse: collapse; width: 100%; font-size: 13px; }
 #panel td { padding: 4px 0; vertical-align: top; }
@@ -93,21 +112,26 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
 </header>
 <div id="layout">
   <aside>
-    <div class="section"><div class="label">Farbe</div><div class="segmented" id="color">
-      <button data-mode="cluster" class="on">Cluster</button><button data-mode="fraction">Fraktion</button><button data-mode="weekday">Tag</button><button data-mode="mdb">Rolle</button>
+    <div class="sidebar-head"><b>Filter</b><span><span id="count"></span> · <button class="linkbtn" id="reset">zurücksetzen</button></span></div>
+    <div class="group" id="g-search"><div class="title">Suche<span class="arrow"></span></div><div class="content">
+      <div class="searchrow"><input type="text" id="search" placeholder="Text, Name, Tagesordnungspunkt…"><button id="addSearch" title="Suchbegriff als Filter speichern (Enter)">+</button></div>
+      <div class="list" id="searchList"></div>
     </div></div>
-    <div class="section"><div class="label">Fraktion</div><div class="chips" id="fractions"></div></div>
-    <div class="section"><div class="label">Tag</div><div class="chips" id="days"></div></div>
-    <div class="section"><div class="label">Tagesordnungspunkt</div><select id="agenda"><option value="">alle</option></select></div>
-    <div class="section"><div class="label">Cluster</div><select id="clusterSel"><option value="">alle</option></select></div>
-    <div class="section"><div class="label">Redner:in</div><input type="text" id="speaker" list="speakers" placeholder="Name…"><datalist id="speakers"></datalist></div>
-    <div class="section">
+    <div class="group" id="g-fraction"><div class="title">Fraktion<span class="arrow"></span></div><div class="content"><div class="list" data-key="fraction"></div></div></div>
+    <div class="group" id="g-weekday"><div class="title">Tag<span class="arrow"></span></div><div class="content"><div class="list" data-key="weekday"></div></div></div>
+    <div class="group" id="g-agenda"><div class="title">Tagesordnungspunkt<span class="reload" data-key="agenda" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="agenda"></div></div></div>
+    <div class="group" id="g-cluster"><div class="title">Thema<span class="reload" data-key="cluster" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="cluster"></div></div></div>
+    <div class="group collapsed" id="g-speaker"><div class="title">Redner:in<span class="reload" data-key="speaker" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="speaker"></div></div></div>
+    <div class="group" id="g-view"><div class="title">Anzeige<span class="arrow"></span></div><div class="content">
+      <div class="segmented" id="color">
+        <button data-mode="cluster" class="on">Thema</button><button data-mode="fraction">Fraktion</button><button data-mode="weekday">Tag</button><button data-mode="agenda">TOP</button><button data-mode="mdb">Rolle</button>
+      </div>
+      <label class="toggle">Gefilterte abdunkeln statt ausblenden <input type="checkbox" id="dim"></label>
       <label class="toggle">Regierungsbefragung zeigen <input type="checkbox" id="befragung"></label>
       <label class="toggle">Größe nach Redelänge <input type="checkbox" id="sizeByLength"></label>
-      <label class="toggle">Cluster-Labels <input type="checkbox" id="showLabels" checked></label>
+      <label class="toggle">Themen-Labels <input type="checkbox" id="showLabels" checked></label>
       <label class="toggle">Auswahl-Werkzeug (Lasso) <input type="checkbox" id="lasso"></label>
-    </div>
-    <div class="section"><span id="count"></span> · <button class="linkbtn" id="reset">zurücksetzen</button></div>
+    </div></div>
   </aside>
   <div id="map"></div>
   <div id="panel"></div>
@@ -117,39 +141,53 @@ const DATA = __DATA__;
 const S = DATA.speeches;
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const FRACTION_COLORS = { 'CDU/CSU': css('--cdu'), 'SPD': css('--spd'), 'AfD': css('--afd'), 'BÜNDNIS 90/DIE GRÜNEN': css('--gru'), 'Die Linke': css('--lin'), 'fraktionslos': css('--frl'), 'ohne Fraktion': css('--reg') };
-const PALETTE = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948','#8db8ea','#f5a88a','#7ed4b3','#f5c96a','#f3b4c9','#6fbf6f','#a49bd9','#f09a9a'];
+const PALETTE = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948','#8db8ea','#f5a88a','#7ed4b3','#f5c96a','#f3b4c9','#6fbf6f','#a49bd9','#f09a9a','#1b4f9c','#b3461c','#127a55','#9c6a00','#b04a78','#004d00','#2f2470','#a12726'];
 const NOISE = '#d4d4d0';
 const FRACTION_ORDER = Object.keys(FRACTION_COLORS);
 const DAY_ORDER = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const clusterById = Object.fromEntries(DATA.clusters.map(c => [c.id, c]));
-const clusterLabel = c => c < 0 ? 'ohne Cluster' : clusterById[c].terms.slice(0, 3).join(' · ');
+const clusterLabel = c => c < 0 ? 'ohne Thema' : clusterById[c].terms.slice(0, 3).join(' · ');
 const excerpt = s => { const t = s.paragraphs.find(p => p[0] === 'text'); return t ? t[1].slice(0, 140) + '…' : ''; };
 const byId = Object.fromEntries(S.map(s => [s.id, s]));
+const fmt = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4);
 S.forEach(s => {
   s.weekday = DAY_ORDER[(new Date(s.date).getUTCDay() + 6) % 7];
   s.befragung = s.agenda === 'Befragung der Bundesregierung';
+  s.text = s.paragraphs.filter(p => p[0] === 'text').map(p => p[1]).join('\n');
+  s.haystack = `${s.speaker}\n${s.role || ''}\n${s.agenda}\n${s.text}`.toLowerCase();
   s.hover = `<b>${s.speaker}</b> · ${s.fraction}${s.role ? ' · ' + s.role : ''}<br>${s.weekday} ${s.date} · ${s.top}<br>${s.agenda.slice(0, 90)}<br><i>${clusterLabel(s.cluster)}</i><br><span style="color:#888">${excerpt(s)}</span>`;
 });
-const FRACTIONS = [...new Set(S.map(s => s.fraction))].sort((a, b) => (FRACTION_ORDER.indexOf(a) + 1 || 99) - (FRACTION_ORDER.indexOf(b) + 1 || 99));
-const DAYS = DAY_ORDER.filter(d => S.some(s => s.weekday === d));
+const AGENDA = [...Map.groupBy(S, s => s.agenda_id).values()].map(v => v[0]).sort((a, b) => a.agenda_id.localeCompare(b.agenda_id, 'de', {numeric: true}));
+const AGENDA_COLOR = Object.fromEntries(AGENDA.map((s, i) => [s.agenda_id, PALETTE[i % PALETTE.length]]));
 const dates = [...new Set(S.map(s => s.date))].sort();
-const fmt = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4);
 document.getElementById('meta').textContent = `${fmt(dates[0])} – ${fmt(dates[dates.length - 1])} · ${S.length} Reden · ${DATA.clusters.length} Themen`;
 document.title = `Themenlandschaft ${DATA.week}`;
 const weekSel = document.getElementById('weekSel');
 DATA.weeks.forEach(w => weekSel.add(new Option(w, w, false, w === DATA.week)));
 weekSel.onchange = e => location.href = e.target.value + '.html';
 
-// --- state, kept in the URL hash so a view can be shared -----------------------------
-const state = { mode: 'cluster', fractions: new Set(FRACTIONS), days: new Set(DAYS), agenda: '', cluster: '', speaker: '', befragung: false, open: '' };
+// --- filter groups: value of a speech, display name, colour ---------------------------
+const GROUPS = {
+  fraction: { of: s => s.fraction, name: v => v, color: v => FRACTION_COLORS[v] || NOISE, order: (a, b) => (FRACTION_ORDER.indexOf(a) + 1 || 99) - (FRACTION_ORDER.indexOf(b) + 1 || 99) },
+  weekday: { of: s => s.weekday, name: v => v, color: v => PALETTE[DAY_ORDER.indexOf(v)], order: (a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b) },
+  agenda: { of: s => s.agenda_id, name: v => { const a = AGENDA.find(x => x.agenda_id === v); return `${a.weekday} · ${a.agenda}`; }, color: v => AGENDA_COLOR[v], order: (a, b) => a.localeCompare(b, 'de', {numeric: true}) },
+  cluster: { of: s => s.cluster, name: v => v < 0 ? 'ohne Thema' : clusterById[v].terms.join(' · '), color: v => v < 0 ? NOISE : PALETTE[v % PALETTE.length], order: (a, b) => (a < 0) - (b < 0) || a - b },
+  speaker: { of: s => s.speaker, name: v => v, color: v => FRACTION_COLORS[S.find(s => s.speaker === v).fraction] || NOISE, order: null },
+};
+const state = { mode: 'cluster', checked: Object.fromEntries(Object.keys(GROUPS).map(k => [k, new Set()])), terms: [], live: '', dim: false, befragung: false, open: '' };
+const totals = Object.fromEntries(Object.keys(GROUPS).map(k => [k, Map.groupBy(S, GROUPS[k].of)]));
+const listOrder = Object.fromEntries(Object.keys(GROUPS).map(k => {
+  const g = GROUPS[k], vals = [...totals[k].keys()];
+  return [k, g.order ? vals.sort(g.order) : vals.sort((a, b) => totals[k].get(b).length - totals[k].get(a).length)];
+}));
+
+// --- URL hash keeps the view shareable ----------------------------------------------
 const encodeState = () => {
   const h = new URLSearchParams();
   if (state.mode !== 'cluster') h.set('farbe', state.mode);
-  const fOff = FRACTIONS.filter(f => !state.fractions.has(f)); if (fOff.length) h.set('ohne', fOff.join('|'));
-  const dOff = DAYS.filter(d => !state.days.has(d)); if (dOff.length) h.set('ohneTag', dOff.join('|'));
-  if (state.agenda) h.set('top', state.agenda);
-  if (state.cluster !== '') h.set('cluster', state.cluster);
-  if (state.speaker) h.set('redner', state.speaker);
+  for (const k in GROUPS) if (state.checked[k].size) h.set(k, [...state.checked[k]].join('|'));
+  if (state.terms.length) h.set('suche', state.terms.filter(t => t.on).map(t => t.term).join('|'));
+  if (state.dim) h.set('dim', '1');
   if (state.befragung) h.set('befragung', '1');
   if (state.open) h.set('rede', state.open);
   history.replaceState(null, '', h.size ? '#' + h : location.pathname);
@@ -157,96 +195,109 @@ const encodeState = () => {
 const decodeState = () => {
   const h = new URLSearchParams(location.hash.slice(1));
   if (h.get('farbe')) state.mode = h.get('farbe');
-  (h.get('ohne') || '').split('|').filter(Boolean).forEach(f => state.fractions.delete(f));
-  (h.get('ohneTag') || '').split('|').filter(Boolean).forEach(d => state.days.delete(d));
-  state.agenda = h.get('top') || ''; state.cluster = h.get('cluster') ?? ''; state.speaker = h.get('redner') || '';
-  state.befragung = h.get('befragung') === '1'; state.open = h.get('rede') || '';
+  for (const k in GROUPS) (h.get(k) || '').split('|').filter(Boolean).forEach(v => state.checked[k].add(k === 'cluster' ? +v : v));
+  state.terms = (h.get('suche') || '').split('|').filter(Boolean).map(term => ({ term, on: true }));
+  state.dim = h.get('dim') === '1'; state.befragung = h.get('befragung') === '1'; state.open = h.get('rede') || '';
 };
 decodeState();
 
-// --- controls -------------------------------------------------------------------------
-const chipEls = {};
-const chips = (containerId, values, set, colorOf) => {
-  const el = document.getElementById(containerId);
-  values.forEach(v => {
-    const c = document.createElement('span'); c.className = 'chip' + (set.has(v) ? '' : ' off');
-    c.innerHTML = `<span class="dot" style="background:${colorOf(v)}"></span>${v} <small></small>`;
-    c.onclick = e => {
-      if (e.altKey || e.shiftKey) { set.clear(); set.add(v); }  // shift-click: only this one
-      else if (set.has(v)) set.delete(v); else set.add(v);
-      draw();
-    };
-    chipEls[v] = c; el.appendChild(c);
+// --- sidebar --------------------------------------------------------------------------
+const listEls = Object.fromEntries([...document.querySelectorAll('.list[data-key]')].map(el => [el.dataset.key, el]));
+function renderList(k) {
+  const g = GROUPS[k];
+  listEls[k].innerHTML = listOrder[k].map(v => `<label class="item"><input type="checkbox"${state.checked[k].has(v) ? ' checked' : ''}><span class="dot" style="background:${g.color(v)}"></span><span class="name" title="${esc(g.name(v))}">${esc(g.name(v))}</span><span class="n"></span></label>`).join('');
+  listEls[k].querySelectorAll('input').forEach((input, i) => input.onchange = () => {
+    const v = listOrder[k][i];
+    input.checked ? state.checked[k].add(v) : state.checked[k].delete(v);
+    draw();
+    if (k === 'agenda' && input.checked) { const gr = S.filter(s => s.agenda_id === v); showGroup(gr, gr[0].agenda, `${gr[0].weekday} ${fmt(gr[0].date)} · ${gr[0].top}`); }
+    if (k === 'speaker' && input.checked) showGroup(S.filter(s => s.speaker === v), v, 'alle Reden dieser Woche');
+    if (k === 'cluster' && input.checked && v >= 0) showCluster(v);
   });
-};
-chips('fractions', FRACTIONS, state.fractions, f => FRACTION_COLORS[f] || NOISE);
-chips('days', DAYS, state.days, d => PALETTE[DAY_ORDER.indexOf(d)]);
-const agendaSel = document.getElementById('agenda');
-[...Map.groupBy(S, s => s.agenda_id).values()].map(v => v[0]).sort((a, b) => a.agenda_id.localeCompare(b.agenda_id, 'de', {numeric: true}))
-  .forEach(s => agendaSel.add(new Option(`${s.weekday} · ${s.agenda.slice(0, 60)}`, s.agenda_id)));
-const clusterSel = document.getElementById('clusterSel');
-DATA.clusters.forEach(c => clusterSel.add(new Option(`${c.terms.join(', ')} (${c.n})`, c.id)));
-const speakerInput = document.getElementById('speaker');
-[...new Set(S.map(s => s.speaker))].sort().forEach(n => document.getElementById('speakers').appendChild(new Option(n)));
-agendaSel.onchange = e => { state.agenda = e.target.value; draw(); if (state.agenda) { const g = S.filter(s => s.agenda_id === state.agenda); showGroup(g, g[0].agenda, `${g[0].weekday} ${fmt(g[0].date)} · ${g[0].top}`); } };
-clusterSel.onchange = e => { state.cluster = e.target.value; draw(); if (state.cluster !== '') showCluster(+state.cluster); };
+}
+Object.keys(GROUPS).forEach(renderList);
+function renderSearchList() {
+  const el = document.getElementById('searchList');
+  el.innerHTML = state.terms.map((t, i) =>
+    `<label class="item"><input type="checkbox"${t.on ? ' checked' : ''} data-i="${i}"><span class="name">„${esc(t.term)}“</span><span class="n"></span><span class="x" data-i="${i}" title="Entfernen">×</span></label>`).join('');
+  el.querySelectorAll('input').forEach(input => input.onchange = () => { state.terms[+input.dataset.i].on = input.checked; draw(); });
+  el.querySelectorAll('.x').forEach(x => x.onclick = e => { e.preventDefault(); state.terms.splice(+x.dataset.i, 1); renderSearchList(); draw(); });
+}
+renderSearchList();
+const searchInput = document.getElementById('search');
 let typing;
-speakerInput.oninput = e => { state.speaker = e.target.value.trim(); clearTimeout(typing); typing = setTimeout(draw, 120); };
-document.getElementById('befragung').onchange = e => { state.befragung = e.target.checked; draw(); };
-['sizeByLength', 'showLabels', 'lasso'].forEach(id => document.getElementById(id).onchange = draw);
-document.querySelectorAll('#color button').forEach(b => b.onclick = () => { state.mode = b.dataset.mode; draw(); });
-document.getElementById('reset').onclick = () => {
-  Object.assign(state, { mode: 'cluster', fractions: new Set(FRACTIONS), days: new Set(DAYS), agenda: '', cluster: '', speaker: '', befragung: false, open: '' });
-  showHint(); draw();
+searchInput.oninput = () => { state.live = searchInput.value.trim().toLowerCase(); clearTimeout(typing); typing = setTimeout(draw, 120); };
+const addSearch = () => {
+  const term = searchInput.value.trim();
+  if (term.length > 1 && !state.terms.some(t => t.term.toLowerCase() === term.toLowerCase())) state.terms.push({ term, on: true });
+  searchInput.value = ''; state.live = ''; renderSearchList(); draw();
 };
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { state.open = ''; showHint(); draw(); } });
-const setSpeaker = name => { state.speaker = name; draw(); showGroup(S.filter(s => s.speaker === name), name, 'alle Reden dieser Woche'); };
-const setCluster = id => { state.cluster = String(id); draw(); };
+searchInput.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addSearch(); } };
+document.getElementById('addSearch').onclick = addSearch;
+document.querySelectorAll('.group .title').forEach(t => t.onclick = e => { if (!e.target.classList.contains('reload')) t.parentElement.classList.toggle('collapsed'); });
+document.querySelectorAll('.reload').forEach(r => r.onclick = () => {
+  const k = r.dataset.key, counts = Map.groupBy(S.filter(matches), GROUPS[k].of);
+  listOrder[k].sort((a, b) => (counts.get(b) || []).length - (counts.get(a) || []).length);
+  renderList(k); draw();
+});
+document.querySelectorAll('#color button').forEach(b => b.onclick = () => { state.mode = b.dataset.mode; draw(); });
+['dim', 'befragung'].forEach(id => document.getElementById(id).onchange = e => { state[id] = e.target.checked; draw(); });
+['sizeByLength', 'showLabels', 'lasso'].forEach(id => document.getElementById(id).onchange = draw);
+document.getElementById('reset').onclick = () => {
+  for (const k in GROUPS) state.checked[k].clear();
+  Object.assign(state, { mode: 'cluster', terms: [], live: '', dim: false, befragung: false, open: '' });
+  searchInput.value = ''; Object.keys(GROUPS).forEach(renderList); renderSearchList(); showHint(); draw();
+};
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.activeElement !== searchInput) { state.open = ''; showHint(); draw(); } });
+const setSpeaker = name => { state.checked.speaker = new Set([name]); renderList('speaker'); draw(); showGroup(S.filter(s => s.speaker === name), name, 'alle Reden dieser Woche'); };
+const setCluster = id => { state.checked.cluster = new Set([id]); renderList('cluster'); draw(); if (id >= 0) showCluster(id); };
 
 function syncControls() {
   document.querySelectorAll('#color button').forEach(x => x.classList.toggle('on', x.dataset.mode === state.mode));
-  FRACTIONS.forEach(f => chipEls[f].classList.toggle('off', !state.fractions.has(f)));
-  DAYS.forEach(d => chipEls[d].classList.toggle('off', !state.days.has(d)));
-  agendaSel.value = state.agenda; clusterSel.value = state.cluster;
-  if (document.activeElement !== speakerInput) speakerInput.value = state.speaker;
-  document.getElementById('befragung').checked = state.befragung;
+  ['dim', 'befragung'].forEach(id => document.getElementById(id).checked = state[id]);
+  for (const k in GROUPS) {
+    const title = document.querySelector(`#g-${k} .title`);
+    title.querySelector('.badge')?.remove();
+    if (state.checked[k].size) title.querySelector('.arrow').insertAdjacentHTML('beforebegin', `<span class="badge">${state.checked[k].size}</span>`);
+  }
 }
 
-const visible = s => state.fractions.has(s.fraction) && state.days.has(s.weekday)
-  && (!state.agenda || s.agenda_id === state.agenda) && (state.cluster === '' || s.cluster === +state.cluster)
-  && (!state.speaker || s.speaker.toLowerCase().includes(state.speaker.toLowerCase())) && (state.befragung || state.speaker || state.agenda || !s.befragung);  // an explicit speaker/TOP filter overrides the Befragung hide
+// empty group = no filter; OR within a group, AND across groups; every active search term has to match
+const matches = s => Object.keys(GROUPS).every(k => !state.checked[k].size || state.checked[k].has(GROUPS[k].of(s)))
+  && state.terms.every(t => !t.on || s.haystack.includes(t.term.toLowerCase()))
+  && (state.befragung || state.checked.speaker.size || state.checked.agenda.size || !s.befragung);  // an explicit speaker/TOP filter overrides the Befragung hide
 
 // --- drawing --------------------------------------------------------------------------
-const keyOf = { cluster: s => s.cluster, fraction: s => s.fraction, weekday: s => s.weekday, mdb: s => s.role ? 'Regierung' : 'Abgeordnete' };
-const colorOf = {
-  cluster: k => k < 0 ? NOISE : PALETTE[k % PALETTE.length],
-  fraction: k => FRACTION_COLORS[k] || NOISE,
-  weekday: k => PALETTE[DAY_ORDER.indexOf(k)],
-  mdb: k => k === 'Abgeordnete' ? PALETTE[0] : PALETTE[1],
-};
-const nameOf = { cluster: clusterLabel, fraction: k => k, weekday: k => k, mdb: k => k };
-const order = { cluster: (a, b) => a - b, fraction: (a, b) => FRACTIONS.indexOf(a) - FRACTIONS.indexOf(b), weekday: (a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b), mdb: (a, b) => a < b ? -1 : 1 };
+const keyOf = { cluster: s => s.cluster, fraction: s => s.fraction, weekday: s => s.weekday, agenda: s => s.agenda_id, mdb: s => s.role ? 'Regierung' : 'Abgeordnete' };
+const colorOf = { cluster: GROUPS.cluster.color, fraction: GROUPS.fraction.color, weekday: GROUPS.weekday.color, agenda: GROUPS.agenda.color, mdb: k => k === 'Abgeordnete' ? PALETTE[0] : PALETTE[1] };
+const nameOf = { cluster: clusterLabel, fraction: k => k, weekday: k => k, agenda: k => GROUPS.agenda.name(k).slice(0, 40), mdb: k => k };
+const order = { cluster: GROUPS.cluster.order, fraction: GROUPS.fraction.order, weekday: GROUPS.weekday.order, agenda: GROUPS.agenda.order, mdb: (a, b) => a < b ? -1 : 1 };
 const FONT = 'Inter, system-ui, sans-serif';
 
 function draw() {
   syncControls(); encodeState();
-  const mode = state.mode;
-  const sizeBy = document.getElementById('sizeByLength').checked;
-  const shown = S.filter(visible);
-  document.getElementById('count').textContent = `${shown.length} von ${S.length} Reden`;
-  const counts = Map.groupBy(shown, s => s.fraction), dcounts = Map.groupBy(shown, s => s.weekday);
-  FRACTIONS.forEach(f => chipEls[f].querySelector('small').textContent = (counts.get(f) || []).length || '');
-  DAYS.forEach(d => chipEls[d].querySelector('small').textContent = (dcounts.get(d) || []).length || '');
+  const mode = state.mode, sizeBy = document.getElementById('sizeByLength').checked;
+  const shown = S.filter(matches), shownIds = new Set(shown.map(s => s.id));
+  document.getElementById('count').textContent = `${shown.length} von ${S.length}`;
+  for (const k in GROUPS) {
+    const counts = Map.groupBy(shown, GROUPS[k].of);
+    listEls[k].querySelectorAll('.item').forEach((el, i) => { const n = (counts.get(listOrder[k][i]) || []).length; el.querySelector('.n').textContent = n; el.classList.toggle('zero', !n); });
+  }
+  document.querySelectorAll('#searchList .item').forEach((el, i) => el.querySelector('.n').textContent = S.filter(s => s.haystack.includes(state.terms[i].term.toLowerCase())).length);
   const size = s => sizeBy ? 5 + 11 * Math.sqrt(s.chars / 8000) : 8;
-  const groups = Map.groupBy(shown, keyOf[mode]);
+  const drawn = state.dim ? S : shown;
+  const groups = Map.groupBy(drawn, keyOf[mode]);
   const traces = [...groups.keys()].sort(order[mode]).map(k => {
     const g = groups.get(k);
     return {
       type: 'scattergl', mode: 'markers', name: nameOf[mode](k),
       x: g.map(s => s.x), y: g.map(s => s.y), customdata: g.map(s => s.id), text: g.map(s => s.hover), hoverinfo: 'text',
-      marker: { color: colorOf[mode](k), size: g.map(size), opacity: .9, line: { width: 1, color: '#ffffff' } },
+      marker: { color: colorOf[mode](k), size: g.map(size), opacity: g.map(s => shownIds.has(s.id) ? .9 : .1), line: { width: 1, color: '#ffffff' } },
     };
   });
+  const live = state.live.length > 1 ? drawn.filter(s => s.haystack.includes(state.live)) : [];
+  if (live.length) traces.push({ type: 'scattergl', mode: 'markers', name: `Treffer „${state.live}“ (${live.length})`, hoverinfo: 'skip',
+    x: live.map(s => s.x), y: live.map(s => s.y), customdata: live.map(s => s.id), marker: { color: 'rgba(0,0,0,0)', size: live.map(s => size(s) + 6), line: { width: 2, color: '#1f2328' } } });
   const open = byId[state.open];
   if (open) traces.push({ type: 'scattergl', mode: 'markers', name: 'geöffnet', showlegend: false, hoverinfo: 'skip',
     x: [open.x], y: [open.y], customdata: [open.id], marker: { color: 'rgba(0,0,0,0)', size: size(open) + 10, line: { width: 2, color: '#1f2328' } } });
@@ -263,39 +314,43 @@ function draw() {
     dragmode: document.getElementById('lasso').checked ? 'lasso' : 'pan',
     xaxis: { visible: false }, yaxis: { visible: false, scaleanchor: 'x' },
     hoverlabel: { bgcolor: '#ffffff', bordercolor: '#e7e7e3', font: { color: '#1f2328', size: 12, family: FONT }, align: 'left' },
-    showlegend: mode !== 'cluster', legend: { orientation: 'h', y: 0, x: 0.5, xanchor: 'center', yanchor: 'bottom', bgcolor: 'rgba(255,255,255,.7)' },
+    showlegend: mode !== 'cluster' && mode !== 'agenda', legend: { orientation: 'h', y: 0, x: 0.5, xanchor: 'center', yanchor: 'bottom', bgcolor: 'rgba(255,255,255,.7)' },
     annotations, uirevision: 'keep',
   }, { responsive: true, scrollZoom: true, displayModeBar: false, doubleClick: 'reset' });
 }
 
 // --- side panel -----------------------------------------------------------------------
 const panel = document.getElementById('panel');
-const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
 const dot = color => `<span class="dot" style="background:${color}"></span>`;
+const highlight = t => {
+  const terms = state.terms.filter(x => x.on).map(x => x.term).concat(state.live.length > 1 ? [state.live] : []);
+  return terms.reduce((h, term) => h.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`), esc(t));
+};
 const bars = (items, colorOf) => `<table>${items.map(([k, n, total]) =>
   `<tr><td>${dot(colorOf(k))} ${esc(k)}<div class="bar"><i style="width:${100 * n / total}%;background:${colorOf(k)}"></i></div></td><td>${n}</td></tr>`).join('')}</table>`;
 const breakdown = (g, withTopics = true) => {
   const byF = Map.groupBy(g, s => s.fraction), byA = Map.groupBy(g, s => s.agenda_id), byC = Map.groupBy(g, s => s.cluster), byS = Map.groupBy(g, s => s.speaker);
   return `
-    <h3>Fraktionen</h3>${bars(FRACTIONS.filter(f => byF.has(f)).map(f => [f, byF.get(f).length, g.length]), f => FRACTION_COLORS[f] || NOISE)}
-    ${withTopics ? '<h3>Themen</h3>' + bars([...byC].sort((a, b) => b[1].length - a[1].length).map(([c, v]) => [clusterLabel(c), v.length, g.length]), c => PALETTE[0]) : ''}
-    <h3>Tagesordnungspunkte</h3><ul>${[...byA.values()].sort((a, b) => b.length - a.length).map(v => `<li>${esc(v[0].agenda.slice(0, 110))} <span class="sub">${v[0].weekday} · ${v.length}</span></li>`).join('')}</ul>
+    <h3>Fraktionen</h3>${bars(listOrder.fraction.filter(f => byF.has(f)).map(f => [f, byF.get(f).length, g.length]), GROUPS.fraction.color)}
+    ${withTopics ? '<h3>Themen</h3>' + bars([...byC].sort((a, b) => b[1].length - a[1].length).map(([c, v]) => [clusterLabel(c), v.length, g.length]), () => PALETTE[0]) : ''}
+    <h3>Tagesordnungspunkte</h3><ul>${[...byA.values()].sort((a, b) => b.length - a.length).map(v => `<li>${dot(AGENDA_COLOR[v[0].agenda_id])} ${esc(v[0].agenda.slice(0, 110))} <span class="sub">${v[0].weekday} · ${v.length}</span></li>`).join('')}</ul>
     <h3>Redner:innen</h3><p>${[...byS].sort((a, b) => b[1].length - a[1].length).slice(0, 12).map(([n, v]) => `<a href="#" onclick="setSpeaker(${JSON.stringify(n)});return false">${esc(n)}</a>${v.length > 1 ? ' (' + v.length + ')' : ''}`).join(', ')}</p>`;
 };
 function showHint() {
   panel.innerHTML = `<p class="hint">Jeder Punkt ist eine Rede der Sitzungswoche; nahe Punkte handeln von Ähnlichem. Die Beschriftungen sind die Themen, die sich aus den Reden ergeben.</p>
-    <p class="hint">Punkt anklicken: die Rede mit Zwischenrufen, Quelle und ähnlichen Reden.<br>Label anklicken: wer spricht zu diesem Thema.<br>Lasso einschalten und Punkte umkreisen: Zusammensetzung der Auswahl.<br>Shift-Klick auf einen Chip: nur diesen zeigen. <kbd>Esc</kbd> schließt.</p>`;
+    <p class="hint">Filter links: innerhalb einer Gruppe „oder“, zwischen Gruppen „und“; nichts angehakt heißt alles. Suchbegriffe markieren Treffer, <kbd>Enter</kbd> macht sie zum Filter.<br>Punkt anklicken: die Rede mit Zwischenrufen, Quelle und ähnlichen Reden. Label anklicken: wer spricht zu diesem Thema. Lasso: Zusammensetzung einer Auswahl. <kbd>Esc</kbd> schließt.</p>`;
 }
 function showSpeech(s) {
   state.open = s.id;
   if (s.befragung) state.befragung = true;
-  const paras = s.paragraphs.map(([k, t]) => `<p class="${k}">${esc(t)}</p>`).join('');
-  const similar = s.similar.map(id => byId[id]).map(o => `<div class="similar" onclick="showSpeech(byId['${o.id}']);draw()"><div class="who">${dot(FRACTION_COLORS[o.fraction] || NOISE)} ${esc(o.speaker)} <span class="sub" style="color:var(--faint);font-weight:400">· ${esc(o.fraction)}</span></div><div class="what">${esc(o.agenda.slice(0, 80))}</div></div>`).join('');
+  const paras = s.paragraphs.map(([k, t]) => `<p class="${k}">${k === 'text' ? highlight(t) : esc(t)}</p>`).join('');
+  const similar = s.similar.map(id => byId[id]).map(o => `<div class="similar" onclick="showSpeech(byId['${o.id}']);draw()"><div class="who">${dot(GROUPS.fraction.color(o.fraction))} ${esc(o.speaker)} <span style="color:var(--faint);font-weight:400">· ${esc(o.fraction)}</span></div><div class="what">${esc(o.agenda.slice(0, 80))}</div></div>`).join('');
   panel.innerHTML = `
     <button class="close" onclick="state.open='';showHint();draw()" title="Schließen (Esc)">×</button>
     <h2>${esc(s.speaker)}</h2>
     <div class="meta"><b>${esc(s.fraction)}</b>${s.role ? ' · ' + esc(s.role) : ''} · <a href="#" onclick="setSpeaker(${JSON.stringify(s.speaker)});return false">alle Reden</a><br>
-      ${s.weekday} ${fmt(s.date)} · ${esc(s.top)}<br>${esc(s.agenda)}<br>
+      ${s.weekday} ${fmt(s.date)} · ${esc(s.top)}<br>${dot(AGENDA_COLOR[s.agenda_id])} ${esc(s.agenda)}<br>
       Thema: <a href="#" onclick="setCluster(${s.cluster});return false">${esc(clusterLabel(s.cluster))}</a> · ${s.chars.toLocaleString('de')} Zeichen · ${s.comments} Zwischenrufe/Beifall<br>
       <a href="${s.pdf}" target="_blank" rel="noopener">${esc(s.cite)} (PDF)</a> · Rede ${s.id}${s.drucksachen.length ? ' · Drs. ' + s.drucksachen.join(', ') : ''}</div>
     ${paras}
@@ -310,7 +365,7 @@ function showCluster(id) {
   panel.scrollTop = 0;
 }
 function showGroup(g, title, subtitle) {
-  const list = g.length <= 40 ? `<h3>Reden</h3>${g.map(o => `<div class="similar" onclick="showSpeech(byId['${o.id}']);draw()"><div class="who">${dot(FRACTION_COLORS[o.fraction] || NOISE)} ${esc(o.speaker)} <span style="color:var(--faint);font-weight:400">· ${esc(o.fraction)} · ${o.weekday}</span></div><div class="what">${esc(o.agenda.slice(0, 70))}<br>${esc(excerpt(o).slice(0, 110))}</div></div>`).join('')}` : '';
+  const list = g.length <= 40 ? `<h3>Reden</h3>${g.map(o => `<div class="similar" onclick="showSpeech(byId['${o.id}']);draw()"><div class="who">${dot(GROUPS.fraction.color(o.fraction))} ${esc(o.speaker)} <span style="color:var(--faint);font-weight:400">· ${esc(o.fraction)} · ${o.weekday}</span></div><div class="what">${esc(o.agenda.slice(0, 70))}<br>${esc(excerpt(o).slice(0, 110))}</div></div>`).join('')}` : '';
   panel.innerHTML = `<button class="close" onclick="showHint()" title="Schließen">×</button>
     <h2>${esc(title)}</h2>
     <div class="meta">${subtitle ? esc(subtitle) + ' · ' : ''}${g.length} Reden · ${g.reduce((a, s) => a + s.chars, 0).toLocaleString('de')} Zeichen · ${g.reduce((a, s) => a + s.comments, 0)} Zwischenrufe/Beifall</div>${breakdown(g)}${list}`;

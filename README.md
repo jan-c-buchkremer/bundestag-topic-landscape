@@ -35,10 +35,16 @@ works the same.
 `index.html` lists every sitting week with its main topics. Each week page:
 
 - One point per speech; position from UMAP on the speech embedding; topic colour and label from HDBSCAN + c-TF-IDF.
-- Colour by topic, fraction, day or role (MdB / government). Filters: fraction and day chips with live counts
-  (shift-click = only this one), agenda item, topic, speaker search. The view is kept in the URL, so it can be shared.
+- Colour by topic, fraction, day, **agenda item** or role. Agenda-item colouring shows where one debate spreads
+  across the landscape.
+- Filters as collapsible checkbox lists (fraction, day, agenda item, topic, speaker) with live counts: nothing
+  checked means everything, OR within a list, AND across lists; ↻ re-sorts a list by frequency in the current view.
+- Search: typing marks matches on the map, Enter turns the term into a saved filter (several terms are ANDed,
+  each can be switched off or removed); matches are highlighted in the opened speech.
+- "Gefilterte abdunkeln" keeps filtered-out speeches on the map at 10 % opacity instead of hiding them.
+- The view is kept in the URL, so it can be shared.
 - Click a point: the full speech with interjections and applause inline, citation and PDF link, and the five most
-  similar speeches of the week. Click a topic label, pick an agenda item or a speaker: a breakdown by fraction, topic,
+  similar speeches of the week. Click a topic label, tick an agenda item or a speaker: a breakdown by fraction, topic,
   agenda item and speaker, with the speeches listed. Lasso tool: the same breakdown for any hand-drawn selection.
 - Regierungsbefragung turns are hidden by default (two-minute question/answer units under one agenda item); an
   explicit speaker or agenda filter shows them anyway.
