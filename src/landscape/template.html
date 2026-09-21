@@ -35,6 +35,15 @@ aside { border-right: 1px solid var(--line); padding: 14px 16px 24px; }
 #tip { position: absolute; z-index: 5; width: 300px; pointer-events: none; display: none; transform: translate(-50%, -100%);
   background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 9px; box-shadow: 0 6px 20px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05); font-size: 12.5px; line-height: 1.45; }
 #tip::after { content: ''; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 10px; background: var(--card); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: translateX(-50%) rotate(45deg); }
+#labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 3; }
+.lbl { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: 999px;
+  background: rgba(255,255,255,.92); border: 1px solid var(--line); box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  font-size: 11.5px; font-weight: 500; color: #374151; letter-spacing: -.005em; transition: transform .15s, box-shadow .15s; }
+.lbl .dot { width: 7px; height: 7px; }
+.lbl .n { color: var(--faint); font-weight: 400; font-size: 10.5px; }
+.lbl:hover { transform: translate(-50%, -50%) scale(1.06); box-shadow: 0 4px 12px rgba(0,0,0,.12); border-color: currentColor; z-index: 4; }
+.lbl.zoomed { font-size: 12.5px; padding: 4px 11px 4px 8px; }
 #tip.below { transform: translate(-50%, 0); }
 #tip.below::after { bottom: auto; top: -6px; transform: translateX(-50%) rotate(-135deg); }
 #tip .who { font-weight: 600; display: flex; align-items: center; gap: 6px; }
@@ -145,7 +154,7 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
       <label class="toggle">Auswahl-Werkzeug (Lasso) <input type="checkbox" id="lasso"></label>
     </div></div>
   </aside>
-  <div id="map"><div id="tip"></div></div>
+  <div id="map"><div id="labels"></div><div id="tip"></div></div>
   <div id="panel"></div>
 </div>
 <script>
@@ -158,7 +167,9 @@ const NOISE = '#d4d4d0';
 const FRACTION_ORDER = Object.keys(FRACTION_COLORS);
 const DAY_ORDER = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const clusterById = Object.fromEntries(DATA.clusters.map(c => [c.id, c]));
-const clusterLabel = c => c < 0 ? 'ohne Thema' : clusterById[c].terms.slice(0, 3).join(' · ');
+const ACRONYMS = new Set(['usa', 'nato', 'eu', 'uno', 'un', 'csd', 'ard', 'zdf', 'kfw', 'dfb', 'fifa', 'ki', 'eeg', 'geg', 'stpo', 'bgb', 'sgb', 'bka', 'bnd', 'öpnv', 'lng', 'co2', 'nis', 'tv', 'gkv', 'pkv', 'iwf', 'oecd', 'wto']);
+const cap = w => ACRONYMS.has(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1);
+const clusterLabel = (c, n = 3) => c < 0 ? 'ohne Thema' : clusterById[c].terms.slice(0, n).map(cap).join(' · ');
 const excerpt = s => { const t = s.paragraphs.find(p => p[0] === 'text'); return t ? t[1].slice(0, 140) + '…' : ''; };
 const byId = Object.fromEntries(S.map(s => [s.id, s]));
 const fmt = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4);
@@ -312,21 +323,49 @@ function draw() {
   const open = byId[state.open];
   if (open) traces.push({ type: 'scattergl', mode: 'markers', name: 'geöffnet', showlegend: false, hoverinfo: 'skip',
     x: [open.x], y: [open.y], customdata: [open.id], marker: { color: 'rgba(0,0,0,0)', size: size(open) + 10, line: { width: 2, color: '#1f2328' } } });
-  const annotations = document.getElementById('showLabels').checked ? DATA.clusters.map(c => {
+  const median = a => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1]; };
+  labelAnchors = DATA.clusters.map(c => {
     const g = shown.filter(s => s.cluster === c.id);
-    if (g.length < 3) return null;
-    return { x: g.reduce((a, s) => a + s.x, 0) / g.length, y: g.reduce((a, s) => a + s.y, 0) / g.length,
-      text: clusterLabel(c.id), showarrow: false, captureevents: true,
-      font: { size: 11.5, color: '#374151', family: FONT }, bgcolor: 'rgba(255,255,255,.82)', borderpad: 3, _cluster: c.id };
-  }).filter(Boolean) : [];
+    return g.length < 3 ? null : { id: c.id, n: g.length, x: median(g.map(s => s.x)), y: median(g.map(s => s.y)) };
+  }).filter(Boolean);
   Plotly.react('map', traces, {
     paper_bgcolor: css('--bg'), plot_bgcolor: css('--bg'), font: { color: css('--muted'), family: FONT, size: 12 },
     margin: { l: 16, r: 16, t: 16, b: 16 }, hovermode: 'closest',
     dragmode: document.getElementById('lasso').checked ? 'lasso' : 'pan',
     xaxis: { visible: false }, yaxis: { visible: false, scaleanchor: 'x' },
     showlegend: mode !== 'cluster' && mode !== 'agenda', legend: { orientation: 'h', y: 0, x: 0.5, xanchor: 'center', yanchor: 'bottom', bgcolor: 'rgba(255,255,255,.7)' },
-    annotations, uirevision: 'keep',
-  }, { responsive: true, scrollZoom: true, displayModeBar: false, doubleClick: 'reset' });
+    uirevision: 'keep',
+  }, { responsive: true, scrollZoom: true, displayModeBar: false, doubleClick: 'reset' }).then(placeLabels);
+}
+
+// --- topic labels: HTML pills over the plot, re-placed on every zoom/pan -------------------
+const map = document.getElementById('map');
+const SPAN = Math.max(...S.map(s => s.x)) - Math.min(...S.map(s => s.x));
+let labelAnchors = [];
+const labelLayer = document.getElementById('labels');
+function placeLabels() {
+  const fl = map._fullLayout;
+  if (!fl || !document.getElementById('showLabels').checked) { labelLayer.innerHTML = ''; return; }
+  const xa = fl.xaxis, ya = fl.yaxis, W = map.clientWidth, H = map.clientHeight;
+  const zoom = SPAN / (xa.range[1] - xa.range[0]);  // 1 ≈ the whole week in view
+  const terms = zoom > 2 ? 4 : 3, zoomed = zoom > 1.6;
+  const px = a => ({ x: xa.l2p(a.x) + fl._size.l, y: ya.l2p(a.y) + fl._size.t });
+  const items = labelAnchors.map(a => ({ ...a, ...px(a) })).filter(a => a.x > 0 && a.x < W && a.y > 0 && a.y < H).sort((a, b) => b.n - a.n);
+  labelLayer.innerHTML = items.map(a => `<div class="lbl${zoomed ? ' zoomed' : ''}" data-c="${a.id}" style="left:${a.x}px;top:${a.y}px;color:${GROUPS.cluster.color(a.id)}">${dot(GROUPS.cluster.color(a.id))}<span style="color:#374151">${esc(clusterLabel(a.id, terms))}</span><span class="n">${a.n}</span></div>`).join('');
+  // greedy overlap resolution: bigger clusters first; a colliding label slides up or down, else hides
+  const placed = [];
+  labelLayer.querySelectorAll('.lbl').forEach((el, i) => {
+    const w = el.offsetWidth + 6, h = el.offsetHeight + 4, x = Math.min(Math.max(items[i].x, w / 2 + 4), W - w / 2 - 4);
+    el.style.left = x + 'px';
+    let y = items[i].y, ok = false;
+    for (const dy of [0, -1, 1, -2, 2, -3, 3]) {
+      const yy = items[i].y + dy * h;
+      if (!placed.some(r => Math.abs(r.x - x) < (r.w + w) / 2 && Math.abs(r.y - yy) < (r.h + h) / 2)) { y = yy; ok = true; break; }
+    }
+    if (!ok) { el.remove(); return; }
+    el.style.top = y + 'px'; placed.push({ x, y, w, h });
+    el.onclick = () => showCluster(+el.dataset.c);
+  });
 }
 
 // --- side panel -----------------------------------------------------------------------
@@ -381,9 +420,12 @@ function showGroup(g, title, subtitle) {
     <div class="meta">${subtitle ? esc(subtitle) + ' · ' : ''}${g.length} Reden · ${g.reduce((a, s) => a + s.chars, 0).toLocaleString('de')} Zeichen · ${g.reduce((a, s) => a + s.comments, 0)} Zwischenrufe/Beifall</div>${breakdown(g)}${list}`;
   panel.scrollTop = 0;
 }
-const map = document.getElementById('map');
 if (byId[state.open]) showSpeech(byId[state.open]); else showHint();
 draw();
+map.on('plotly_relayouting', placeLabels);
+map.on('plotly_relayout', placeLabels);
+map.on('plotly_afterplot', placeLabels);
+window.addEventListener('resize', () => setTimeout(placeLabels, 50));
 const tip = document.getElementById('tip');
 map.on('plotly_hover', e => {
   const s = byId[e.points[0].customdata], ev = e.event, r = map.getBoundingClientRect();
@@ -402,7 +444,6 @@ map.on('plotly_hover', e => {
 map.on('plotly_unhover', () => tip.style.display = 'none');
 map.addEventListener('mouseleave', () => tip.style.display = 'none');
 map.on('plotly_click', e => { showSpeech(byId[e.points[0].customdata]); draw(); });
-map.on('plotly_clickannotation', e => showCluster(e.annotation._cluster));
 map.on('plotly_selected', e => { if (e && e.points.length) showGroup(e.points.map(p => byId[p.customdata]), `${e.points.length} ausgewählte Reden`, 'Lasso-Auswahl'); });
 </script>
 </body>
