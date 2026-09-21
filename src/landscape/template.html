@@ -443,7 +443,11 @@ map.on('plotly_hover', e => {
 });
 map.on('plotly_unhover', () => tip.style.display = 'none');
 map.addEventListener('mouseleave', () => tip.style.display = 'none');
-map.on('plotly_click', e => { showSpeech(byId[e.points[0].customdata]); draw(); });
+map.on('plotly_click', e => {
+  const id = e.points[0].customdata;
+  if (id === state.open) { state.open = ''; showHint(); } else showSpeech(byId[id]);  // second click on the open speech closes it
+  draw();
+});
 map.on('plotly_selected', e => { if (e && e.points.length) showGroup(e.points.map(p => byId[p.customdata]), `${e.points.length} ausgewählte Reden`, 'Lasso-Auswahl'); });
 </script>
 </body>
