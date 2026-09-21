@@ -31,7 +31,18 @@ header .help { color: var(--faint); font-size: 12.5px; }
 aside, #panel { background: var(--card); overflow-y: auto; }
 aside { border-right: 1px solid var(--line); padding: 14px 16px 24px; }
 #panel { border-left: 1px solid var(--line); padding: 22px 24px 32px; }
-#map { min-width: 0; }
+#map { min-width: 0; position: relative; }
+#tip { position: absolute; z-index: 5; width: 300px; pointer-events: none; display: none; transform: translate(-50%, -100%);
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 9px; box-shadow: 0 6px 20px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05); font-size: 12.5px; line-height: 1.45; }
+#tip::after { content: ''; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 10px; background: var(--card); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: translateX(-50%) rotate(45deg); }
+#tip.below { transform: translate(-50%, 0); }
+#tip.below::after { bottom: auto; top: -6px; transform: translateX(-50%) rotate(-135deg); }
+#tip .who { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+#tip .who span { font-weight: 400; color: var(--muted); }
+#tip .when { color: var(--faint); font-size: 11.5px; margin-bottom: 5px; }
+#tip .top { color: var(--text); margin-bottom: 1px; }
+#tip .topic { color: var(--accent); font-size: 11.5px; margin-bottom: 6px; }
+#tip .excerpt { color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; mask-image: linear-gradient(#000 45%, transparent 100%); -webkit-mask-image: linear-gradient(#000 45%, transparent 100%); }
 #map .cursor-move { cursor: default !important; }  /* Plotly's four-arrow pan cursor */
 
 .sidebar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
@@ -134,7 +145,7 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
       <label class="toggle">Auswahl-Werkzeug (Lasso) <input type="checkbox" id="lasso"></label>
     </div></div>
   </aside>
-  <div id="map"></div>
+  <div id="map"><div id="tip"></div></div>
   <div id="panel"></div>
 </div>
 <script>
@@ -156,7 +167,6 @@ S.forEach(s => {
   s.befragung = s.agenda === 'Befragung der Bundesregierung';
   s.text = s.paragraphs.filter(p => p[0] === 'text').map(p => p[1]).join('\n');
   s.haystack = `${s.speaker}\n${s.role || ''}\n${s.agenda}\n${s.text}`.toLowerCase();
-  s.hover = `<b>${s.speaker}</b> · ${s.fraction}${s.role ? ' · ' + s.role : ''}<br>${s.weekday} ${s.date} · ${s.top}<br>${s.agenda.slice(0, 90)}<br><i>${clusterLabel(s.cluster)}</i><br><span style="color:#888">${excerpt(s)}</span>`;
 });
 const AGENDA = [...Map.groupBy(S, s => s.agenda_id).values()].map(v => v[0]).sort((a, b) => a.agenda_id.localeCompare(b.agenda_id, 'de', {numeric: true}));
 const AGENDA_COLOR = Object.fromEntries(AGENDA.map((s, i) => [s.agenda_id, PALETTE[i % PALETTE.length]]));
@@ -292,7 +302,7 @@ function draw() {
     const g = groups.get(k);
     return {
       type: 'scattergl', mode: 'markers', name: nameOf[mode](k),
-      x: g.map(s => s.x), y: g.map(s => s.y), customdata: g.map(s => s.id), text: g.map(s => s.hover), hoverinfo: 'text',
+      x: g.map(s => s.x), y: g.map(s => s.y), customdata: g.map(s => s.id), hoverinfo: 'none',
       marker: { color: colorOf[mode](k), size: g.map(size), opacity: g.map(s => shownIds.has(s.id) ? .9 : .1), line: { width: 1, color: '#ffffff' } },
     };
   });
@@ -314,7 +324,6 @@ function draw() {
     margin: { l: 16, r: 16, t: 16, b: 16 }, hovermode: 'closest',
     dragmode: document.getElementById('lasso').checked ? 'lasso' : 'pan',
     xaxis: { visible: false }, yaxis: { visible: false, scaleanchor: 'x' },
-    hoverlabel: { bgcolor: '#ffffff', bordercolor: '#e7e7e3', font: { color: '#1f2328', size: 12, family: FONT }, align: 'left' },
     showlegend: mode !== 'cluster' && mode !== 'agenda', legend: { orientation: 'h', y: 0, x: 0.5, xanchor: 'center', yanchor: 'bottom', bgcolor: 'rgba(255,255,255,.7)' },
     annotations, uirevision: 'keep',
   }, { responsive: true, scrollZoom: true, displayModeBar: false, doubleClick: 'reset' });
@@ -375,6 +384,23 @@ function showGroup(g, title, subtitle) {
 const map = document.getElementById('map');
 if (byId[state.open]) showSpeech(byId[state.open]); else showHint();
 draw();
+const tip = document.getElementById('tip');
+map.on('plotly_hover', e => {
+  const s = byId[e.points[0].customdata], ev = e.event, r = map.getBoundingClientRect();
+  if (!s || !ev) return;
+  tip.innerHTML = `<div class="who">${dot(GROUPS.fraction.color(s.fraction))}${esc(s.speaker)} <span>${esc(s.fraction)}</span></div>
+    <div class="when">${s.weekday} ${fmt(s.date)} · ${esc(s.top)}${s.role ? ' · ' + esc(s.role) : ''}</div>
+    <div class="top">${esc(s.agenda.slice(0, 120))}</div>
+    <div class="topic">${esc(clusterLabel(s.cluster))}</div>
+    <div class="excerpt">${esc(s.text.slice(0, 400))}</div>`;
+  tip.style.display = 'block';
+  const x = Math.min(Math.max(ev.clientX - r.left, 160), r.width - 160), cy = ev.clientY - r.top;
+  const below = cy - 16 < tip.offsetHeight + 8;
+  tip.classList.toggle('below', below);
+  tip.style.left = x + 'px'; tip.style.top = (below ? cy + 16 : cy - 16) + 'px';
+});
+map.on('plotly_unhover', () => tip.style.display = 'none');
+map.addEventListener('mouseleave', () => tip.style.display = 'none');
 map.on('plotly_click', e => { showSpeech(byId[e.points[0].customdata]); draw(); });
 map.on('plotly_clickannotation', e => showCluster(e.annotation._cluster));
 map.on('plotly_selected', e => { if (e && e.points.length) showGroup(e.points.map(p => byId[p.customdata]), `${e.points.length} ausgewählte Reden`, 'Lasso-Auswahl'); });
