@@ -1,0 +1,23 @@
+# Decisions
+
+One line per decision, newest last. Date, decision, reason.
+
+- 2026-09-21 — The foundation store is read directly with stdlib `sqlite3` in read-only mode, not via `bdf query corpus`. The corpus query lacks `agenda_item_id` and `person.party`, and calling it means running another repo's venv as a subprocess.
+- 2026-09-21 — Sitting week = ISO week of `sitting.date`. Verified on all 94 WP21 sittings: no week crosses a Sunday, a "gap > 3 days" rule gives the same partition.
+- 2026-09-21 — Speeches under 500 characters are dropped. Below that the units are "Bitte, gern.", single questions and one-sentence replies; the cut removes 9 % of rows WP-wide.
+- 2026-09-21 — Split speeches (`ID…-2`, `-3`…) are re-joined per speaker within one `rede` id. Otherwise one speech is up to six points and the answers to Zwischenfragen become separate short units.
+- 2026-09-21 — Fraction falls back to `person.party` (CDU/CSU merged), else "ohne Fraktion". `speech.fraction` is NULL for every minister (15 % of speeches); without the fallback the whole government is grey.
+- 2026-09-21 — Regierungsbefragung is embedded and clustered like everything else but hidden by default in the page. 23 % of all speeches, two-minute turns on unrelated topics under one agenda item.
+- 2026-09-21 — Embedding model `intfloat/multilingual-e5-base`, chunked on paragraph boundaries to ≤ 500 tokens, mean-pooled. Measured 4 k chars/s on an i7-4790K (6 min per week, ~2.5 h for the Wahlperiode); bge-m3 whole-speech was 6× slower (30 min per week) with no demonstrated gain on agenda purity.
+- 2026-09-21 — Embeddings cached in a repo-local SQLite file, one pooled vector per (model + chunk size, text hash). Content-addressed, so re-join or id changes need no invalidation; stdlib only; `.npy` per week and Parquet rejected. Chunk vectors are not kept: nothing reads them.
+- 2026-09-21 — UMAP (cosine) to 5-D for HDBSCAN (`sklearn.cluster.HDBSCAN`, no extra dependency) and to 2-D for display; c-TF-IDF top terms as labels with a German + parliamentary stoplist. BERTopic rejected as a large dependency for the 15 % of it we would use; KMeans rejected because it forces every point into a topic.
+- 2026-09-21 — Agenda items are a sanity check, not a target: on week 2026-W28, 5-NN agenda purity is 0.72 for e5 vs 0.76 for TF-IDF, and what e5 merges is thematically sensible (Regierungserklärung ↔ economy Antrag ↔ Automobil Aktuelle Stunde).
+- 2026-09-21 — The map is one self-contained static HTML file per week with Plotly.js from CDN and hand-written filter controls. Weekly regenerated output does not need a running Python server; Streamlit/Dash/datamapplot rejected.
+- 2026-09-21 — Fractions use the conventional party colours although red/green fails the CVD check; legend, hover and filters carry the identity as secondary encoding. Clusters use a validated 8-hue palette, extended with lighter steps because labels, not colour, identify a cluster.
+- 2026-09-21 — Speech-level provenance is the sitting PDF plus "BT-PlPr. 21/88" and the speech id; page-level deep links would need a page column in the foundation (the XML has `druckseitennummer` markers, the store drops them).
+- 2026-09-21 — Weeks with fewer than 16 long speeches (the two ceremonial single sittings) get an SVD layout and no clusters instead of UMAP/HDBSCAN, which fail on 5 points. Every week gets a page.
+- 2026-09-21 — c-TF-IDF labels use `max_df=0.5` plus a German function-word and parliamentary stoplist. `max_df` alone left "wollen · doch · dieses" on top of clusters.
+- 2026-09-21 — The five most similar speeches per speech are computed at build time and shipped in the page (5 ids × 400 speeches) instead of shipping vectors; the browser never needs the embeddings.
+- 2026-09-21 — Light theme only, Inter via Google Fonts, Plotly from CDN. The owner asked for a light, minimal look; a dark variant would double the palette validation for no reader.
+- 2026-09-21 — One static page per week plus a static index; the week list is inlined into every page for the navigation dropdown. No server, no build manifest to keep in sync.
+- 2026-09-21 — HDBSCAN `cluster_selection_method="leaf"`. With the default "eom", budget weeks collapse into one cluster of ~470 speeches (2025-W28, 2025-W38); "leaf" gives 14–18 clusters there and the identical result on a normal week.

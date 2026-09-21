@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Themenlandschaft des Bundestages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #f6f6f4; --card: #ffffff; --text: #1f2328; --muted: #6b7280; --faint: #a1a1aa; --line: #e7e7e3; --accent: #2563eb; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 Inter, system-ui, -apple-system, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 48px 24px 64px; }
+h1 { font-size: 26px; font-weight: 600; letter-spacing: -.02em; margin: 0 0 6px; }
+.lead { color: var(--muted); max-width: 640px; margin: 0 0 36px; }
+.year { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin: 28px 0 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+a.card { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; color: inherit; text-decoration: none; transition: border-color .12s, transform .12s, box-shadow .12s; }
+a.card:hover { border-color: #cdcdc8; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.05); }
+.card .week { font-weight: 600; font-size: 15px; }
+.card .dates { color: var(--muted); font-size: 12.5px; margin-bottom: 10px; }
+.card .n { color: var(--faint); font-size: 12px; float: right; }
+.topics { display: flex; flex-wrap: wrap; gap: 5px; }
+.topic { font-size: 12px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 2px 9px; }
+.card.small .topics { display: none; }
+footer { color: var(--faint); font-size: 12.5px; margin-top: 48px; }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Themenlandschaft des Bundestages</h1>
+  <p class="lead">Jede Sitzungswoche der 21. Wahlperiode als Karte: eine Rede ist ein Punkt, Nähe bedeutet ähnliche Inhalte, die Beschriftungen sind die Themen, die sich aus den Reden ergeben. Eine Woche wählen, dann nach Fraktion, Tag, Tagesordnungspunkt oder Redner:in filtern.</p>
+  <div id="years"></div>
+  <footer>Reden aus den Plenarprotokollen des Deutschen Bundestages (<a href="https://www.bundestag.de/services/opendata">Open Data</a>), aufbereitet mit <a href="https://github.com/jan-c-buchkremer/bundestag-data-foundation">bundestag-data-foundation</a>. Jede Rede verlinkt auf ihr Protokoll.</footer>
+</main>
+<script>
+const DATA = __DATA__;
+const fmt = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.';
+const years = Map.groupBy(DATA.weeks, w => w.week.slice(0, 4));
+document.getElementById('years').innerHTML = [...years].map(([y, ws]) => `
+  <div class="year">${y}</div>
+  <div class="grid">${ws.map(w => `
+    <a class="card${w.speeches < 30 ? ' small' : ''}" href="${w.week}.html">
+      <span class="n">${w.speeches} Reden</span>
+      <div class="week">${w.week}</div>
+      <div class="dates">${fmt(w.dates[0])} – ${fmt(w.dates[w.dates.length - 1])}${w.dates[0].slice(0, 4)}${w.speeches < 30 ? ' · Einzelsitzung' : ''}</div>
+      <div class="topics">${w.clusters.slice(0, 6).map(t => `<span class="topic">${t.join(' · ')}</span>`).join('')}</div>
+    </a>`).join('')}</div>`).join('');
+</script>
+</body>
+</html>
