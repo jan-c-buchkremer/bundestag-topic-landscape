@@ -32,6 +32,7 @@ aside, #panel { background: var(--card); overflow-y: auto; }
 aside { border-right: 1px solid var(--line); padding: 14px 16px 24px; }
 #panel { border-left: 1px solid var(--line); padding: 22px 24px 32px; }
 #map { min-width: 0; }
+#map .cursor-move { cursor: default !important; }  /* Plotly's four-arrow pan cursor */
 
 .sidebar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .sidebar-head b { font-size: 13px; font-weight: 600; }
@@ -113,16 +114,16 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
 <div id="layout">
   <aside>
     <div class="sidebar-head"><b>Filter</b><span><span id="count"></span> · <button class="linkbtn" id="reset">zurücksetzen</button></span></div>
-    <div class="group" id="g-search"><div class="title">Suche<span class="arrow"></span></div><div class="content">
+    <div class="group collapsed" id="g-search"><div class="title">Suche<span class="arrow"></span></div><div class="content">
       <div class="searchrow"><input type="text" id="search" placeholder="Text, Name, Tagesordnungspunkt…"><button id="addSearch" title="Suchbegriff als Filter speichern (Enter)">+</button></div>
       <div class="list" id="searchList"></div>
     </div></div>
-    <div class="group" id="g-fraction"><div class="title">Fraktion<span class="arrow"></span></div><div class="content"><div class="list" data-key="fraction"></div></div></div>
-    <div class="group" id="g-weekday"><div class="title">Tag<span class="arrow"></span></div><div class="content"><div class="list" data-key="weekday"></div></div></div>
-    <div class="group" id="g-agenda"><div class="title">Tagesordnungspunkt<span class="reload" data-key="agenda" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="agenda"></div></div></div>
-    <div class="group" id="g-cluster"><div class="title">Thema<span class="reload" data-key="cluster" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="cluster"></div></div></div>
+    <div class="group collapsed" id="g-fraction"><div class="title">Fraktion<span class="arrow"></span></div><div class="content"><div class="list" data-key="fraction"></div></div></div>
+    <div class="group collapsed" id="g-weekday"><div class="title">Tag<span class="arrow"></span></div><div class="content"><div class="list" data-key="weekday"></div></div></div>
+    <div class="group collapsed" id="g-agenda"><div class="title">Tagesordnungspunkt<span class="reload" data-key="agenda" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="agenda"></div></div></div>
+    <div class="group collapsed" id="g-cluster"><div class="title">Thema<span class="reload" data-key="cluster" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="cluster"></div></div></div>
     <div class="group collapsed" id="g-speaker"><div class="title">Redner:in<span class="reload" data-key="speaker" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="speaker"></div></div></div>
-    <div class="group" id="g-view"><div class="title">Anzeige<span class="arrow"></span></div><div class="content">
+    <div class="group collapsed" id="g-view"><div class="title">Anzeige<span class="arrow"></span></div><div class="content">
       <div class="segmented" id="color">
         <button data-mode="cluster" class="on">Thema</button><button data-mode="fraction">Fraktion</button><button data-mode="weekday">Tag</button><button data-mode="agenda">TOP</button><button data-mode="mdb">Rolle</button>
       </div>
