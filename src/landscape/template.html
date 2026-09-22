@@ -38,7 +38,7 @@ aside { border-right: 1px solid var(--line); padding: 14px 16px 24px; }
 #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 3; }
 .lbl { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; white-space: nowrap;
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: 999px;
-  background: rgba(255,255,255,.92); border: 1px solid var(--line); box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  background: rgba(255,255,255,.72); border: 1px solid var(--line); box-shadow: 0 1px 3px rgba(0,0,0,.06);
   font-size: 11.5px; font-weight: 500; color: #374151; letter-spacing: -.005em; transition: transform .15s, box-shadow .15s; }
 .lbl .dot { width: 7px; height: 7px; }
 .lbl .n { color: var(--faint); font-weight: 400; font-size: 10.5px; }
@@ -58,6 +58,8 @@ aside { border-right: 1px solid var(--line); padding: 14px 16px 24px; }
 #tourDim { position: fixed; inset: 0; z-index: 20; background: rgba(15,23,42,.32); pointer-events: none; display: none; }
 #tourDim.show { display: block; }
 .tour-target { position: relative; z-index: 21; border-radius: 8px; box-shadow: 0 0 0 3px var(--accent), 0 0 0 7px var(--accent-soft); background: var(--card); }
+#map.tour-target { border-radius: 0; box-shadow: inset 0 0 0 3px var(--accent); background: transparent; }
+#map.tour-keep { position: relative; z-index: 21; }
 #tourCard { position: fixed; z-index: 22; width: 320px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.14); padding: 14px 16px 12px; display: none; font-size: 13px; line-height: 1.5; }
 #tourCard.show { display: block; }
 #tourCard .bar { height: 3px; margin: 0 0 10px; background: var(--line); }
@@ -417,7 +419,7 @@ const expand = id => document.getElementById(id).classList.remove('collapsed');
 const listRow = (k, v) => listEls[k].querySelectorAll('.item')[listOrder[k].indexOf(v)];
 const TOURS = {
   woche: { title: 'Was war diese Woche los?', blurb: 'Karte lesen, ein Thema öffnen, eine Rede bis zur Quelle verfolgen.', steps: [
-    { target: '#map', title: 'Die Landschaft', text: 'Jeder Punkt ist eine Rede dieser Sitzungswoche. Nahe Punkte handeln von Ähnlichem; die Pillen sind die Themen, die sich aus den Reden ergeben.' },
+    { target: '#map', title: 'Die Landschaft', text: 'Jeder Punkt ist eine Rede dieser Sitzungswoche. Nahe Punkte handeln von Ähnlichem; die Labels sind die Themen, die sich aus den Reden ergeben.' },
     { target: '#map', title: 'Punkte erkunden', text: '<b>Fahre mit der Maus über einen Punkt.</b> Die Karte zeigt, wer wann wozu gesprochen hat, und den Anfang der Rede.', done: () => flags.hovered },
     { target: () => document.querySelector(`.lbl[data-c="${pick.cluster}"]`) || document.getElementById('map'), title: 'Das größte Thema', text: '<b>Klicke das Label „{cluster}“</b> – das größte Thema der Woche.', done: () => panelKind === 'cluster' },
     { target: '#panel', title: 'Wer besetzt das Thema', text: 'Die Balken zeigen, welche Fraktion wie oft zu diesem Thema gesprochen hat, darunter die Tagesordnungspunkte und die Redner:innen (anklickbar).' },
@@ -426,20 +428,21 @@ const TOURS = {
     { target: '#map', title: 'Schließen', text: '<b>Klicke den Punkt noch einmal</b> oder drücke <b>Esc</b>.', done: () => state.open === '' },
   ] },
   debatte: { title: 'Eine Debatte über die Landschaft verfolgen', blurb: 'Ein Tagesordnungspunkt ist kein Thema: sehen, wohin er sich verteilt und wer wo spricht.', steps: [
-    { target: '#map', title: 'Debatte ≠ Thema', text: 'Ein Tagesordnungspunkt ist eine Debatte. Die Karte ordnet Reden nach Inhalt – eine Debatte verteilt sich deshalb oft über mehrere Themen.' },
-    { target: () => document.getElementById('dim').closest('.toggle'), prepare: () => expand('g-view'), title: 'Kontext behalten', text: '<b>Schalte „Gefilterte abdunkeln“ ein.</b> Gefilterte Reden bleiben dann blass sichtbar, statt zu verschwinden.', done: () => state.dim },
-    { target: '#color button[data-mode=agenda]', title: 'Farbe nach Tagesordnungspunkt', text: '<b>Wähle die Farbe „TOP“.</b> Jede Debatte bekommt eine eigene Farbe.', done: () => state.mode === 'agenda' },
+    { intro: true, title: 'Debatte ≠ Thema', text: 'Ein Tagesordnungspunkt ist eine Debatte. Die Karte ordnet Reden nach Inhalt – eine Debatte verteilt sich deshalb oft über mehrere Themen. In dieser Tour färbst du die Karte nach Debatten und siehst, wer wo spricht.' },
+    { target: () => document.getElementById('dim').closest('.toggle'), prepare: () => expand('g-view'), keepMap: true, title: 'Kontext behalten', text: '<b>Schalte „Gefilterte abdunkeln“ ein.</b> Gefilterte Reden bleiben dann blass sichtbar, statt zu verschwinden.', done: () => state.dim },
+    { target: '#color button[data-mode=agenda]', keepMap: true, title: 'Farbe nach Tagesordnungspunkt', text: '<b>Wähle die Farbe „TOP“.</b> Jede Debatte bekommt eine eigene Farbe.', done: () => state.mode === 'agenda' },
     { target: '#map', title: 'Verteilung', text: '„{agenda}“ verteilt sich auf <b>{agendaClusters} Themen</b>. Die Farbe dieser Debatte taucht an mehreren Stellen der Karte auf.' },
-    { target: () => listRow('agenda', pick.agenda), prepare: () => { expand('g-agenda'); listRow('agenda', pick.agenda)?.scrollIntoView({ block: 'center' }); }, title: 'Nur diese Debatte', text: '<b>Hake „{agenda}“ an.</b> Alles andere wird abgedunkelt.', done: () => state.checked.agenda.has(pick.agenda) },
-    { target: '#color button[data-mode=fraction]', prepare: () => expand('g-view'), title: 'Wer spricht wo', text: '<b>Wähle die Farbe „Fraktion“.</b> Jetzt siehst du, welche Fraktion in welcher Ecke der Debatte spricht.', done: () => state.mode === 'fraction' },
+    { target: () => listRow('agenda', pick.agenda), prepare: () => { expand('g-agenda'); listRow('agenda', pick.agenda)?.scrollIntoView({ block: 'center' }); }, keepMap: true, title: 'Nur diese Debatte', text: '<b>Hake „{agenda}“ an.</b> Alles andere wird abgedunkelt.', done: () => state.checked.agenda.has(pick.agenda) },
+    { target: '#color button[data-mode=fraction]', prepare: () => expand('g-view'), keepMap: true, title: 'Wer spricht wo', text: '<b>Wähle die Farbe „Fraktion“.</b> Jetzt siehst du, welche Fraktion in welcher Ecke der Debatte spricht.', done: () => state.mode === 'fraction' },
     { target: '#map', title: 'Ein Thema in der Debatte', text: '<b>Klicke ein Themen-Label</b> innerhalb der Debatte. Die Balken zeigen die Fraktionen dieses Themas.', done: () => panelKind === 'cluster' },
   ] },
   person: { title: 'Einer Person folgen', blurb: 'Alle Reden einer Person, ihre Themen und ähnliche Reden anderer.', steps: [
+    { intro: true, title: 'Eine Person', text: 'Jede Rede gehört zu einer Person. In dieser Tour wählst du eine aus, siehst ihre Themen und Reden der Woche und springst über ähnliche Reden zu anderen Personen.' },
     { target: '#g-speaker .reload', prepare: () => expand('g-speaker'), title: 'Die aktivsten zuerst', text: '<b>Klicke ↻</b> neben „Redner:in“. Die Liste wird nach Häufigkeit sortiert.', done: () => flags.reloaded.speaker },
-    { target: () => listEls.speaker.querySelector('.item'), title: 'Eine Person wählen', text: '<b>Hake die erste Person an</b> ({speaker}).', done: () => state.checked.speaker.size === 1 },
+    { target: () => listEls.speaker.querySelector('.item'), keepMap: true, title: 'Eine Person wählen', text: '<b>Wähle eine Person aus</b>, zum Beispiel {speaker}.', done: () => state.checked.speaker.size === 1 },
     { target: '#panel', title: 'Das Profil der Woche', text: 'Themen, Tagesordnungspunkte und alle Reden dieser Person. Bei einem Personenfilter werden auch Antworten aus der Regierungsbefragung gezeigt.' },
-    { target: '#panel', title: 'Eine Rede öffnen', text: '<b>Öffne eine Rede aus der Liste.</b>', done: () => state.open !== '' },
-    { target: '#panel', title: 'Über Fraktionsgrenzen', text: '<b>Klicke unter „Ähnliche Reden“ eine Rede einer anderen Person.</b> So springst du von Argument zu Gegenargument.', done: () => state.open !== '' && byId[state.open].speaker !== [...state.checked.speaker][0] },
+    { target: '#panel', keepMap: true, title: 'Eine Rede öffnen', text: '<b>Öffne eine Rede aus der Liste.</b>', done: () => state.open !== '' },
+    { target: '#panel', keepMap: true, title: 'Über Fraktionsgrenzen', text: '<b>Klicke unter „Ähnliche Reden“ eine Rede einer anderen Person.</b> So springst du von Argument zu Gegenargument.', done: () => state.open !== '' && byId[state.open].speaker !== [...state.checked.speaker][0] },
     { target: '#meta', title: 'Teilen', text: 'Alles, was du eingestellt hast, steckt in der Adresszeile. Kopiere die URL, um genau diese Ansicht zu teilen.' },
   ] },
 };
@@ -448,7 +451,7 @@ const card = document.getElementById('tourCard'), tourMenu = document.getElement
 const fill = t => t.replace('{cluster}', esc(pick.clusterLabel)).replace('{agenda}', esc(pick.agendaTitle.slice(0, 60))).replace('{agendaClusters}', pick.agendaClusters).replace('{speaker}', esc(pick.speaker));
 const spot = el => { document.querySelectorAll('.tour-target').forEach(x => x.classList.remove('tour-target')); if (el) el.classList.add('tour-target'); };
 function startTour(id) { tour.id = id; tour.step = 0; tourMenu.classList.remove('open'); document.getElementById('tourDim').classList.add('show'); showStep(); }
-function endTour() { tour.id = ''; spot(null); card.classList.remove('show', 'done'); document.getElementById('tourDim').classList.remove('show'); }
+function endTour() { tour.id = ''; spot(null); map.classList.remove('tour-keep'); card.classList.remove('show', 'done'); document.getElementById('tourDim').classList.remove('show'); }
 function showStep() {
   const steps = TOURS[tour.id].steps;
   if (tour.step >= steps.length) {  // closing card
@@ -460,8 +463,10 @@ function showStep() {
   }
   const st = steps[tour.step];
   st.prepare?.();
-  const el = typeof st.target === 'function' ? st.target() : document.querySelector(st.target);
+  const el = st.intro ? null : typeof st.target === 'function' ? st.target() : document.querySelector(st.target);
   spot(el);
+  document.getElementById('tourDim').classList.toggle('show', !st.intro);
+  map.classList.toggle('tour-keep', !!st.keepMap && el !== map);
   card.className = 'show';
   card.innerHTML = `<div class="bar"><i style="width:${100 * tour.step / steps.length}%;display:block;height:100%"></i></div>
     <div class="step">Schritt ${tour.step + 1} von ${steps.length}</div><h4>${fill(st.title)}</h4><p>${fill(st.text)}</p>
