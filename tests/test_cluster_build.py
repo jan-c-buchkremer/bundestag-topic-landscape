@@ -38,4 +38,4 @@ def test_render_embeds_payload(conn):
     start = html.index("const DATA = ") + len("const DATA = ")
     assert json.loads(html[start : html.index(";\n", start)].replace("<\/", "</")) == json.loads(json.dumps(payload))
     index = build.render_index([build.summary(payload)])
-    assert '"speeches": 3' in index and '"2026-07-08"' in index
+    assert '"speeches": 3' in index and '"2026-07-08"' in index and "#tour=" in index
