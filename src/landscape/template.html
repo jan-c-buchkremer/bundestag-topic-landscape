@@ -23,8 +23,24 @@ header { height: 52px; display: flex; align-items: center; gap: 16px; padding: 0
 header h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
 header h1 a { color: inherit; }
 header .meta { color: var(--muted); font-size: 13px; }
-header select { width: auto; }
 header .spacer { flex: 1; }
+.weekwrap { position: relative; }
+.weekbtn { font-size: 12.5px; font-weight: 500; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.weekbtn:hover { border-color: #cdcdc8; background: var(--bg); }
+.weekbtn::before { content: ''; width: 11px; height: 11px; border: 1.5px solid var(--muted); border-top-width: 4px; border-radius: 2px; }
+#weekCal { position: absolute; left: 0; top: 36px; z-index: 30; display: none; gap: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.1); padding: 12px 14px 10px; }
+#weekCal.open { display: flex; }
+#weekCal b { display: block; font-size: 12px; margin-bottom: 6px; }
+#weekCal .mo { display: flex; gap: 3px; align-items: center; margin-bottom: 3px; }
+#weekCal .mo span { width: 30px; font-size: 11px; color: var(--faint); }
+#weekCal .wk { width: 26px; height: 22px; line-height: 22px; text-align: center; border-radius: 6px; font-size: 11px; color: #cfcfca; font-variant-numeric: tabular-nums; }
+#weekCal .wk.has { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+#weekCal .wk.has:hover { background: var(--accent); color: #fff; text-decoration: none; }
+#weekCal .wk.cur { background: var(--accent); color: #fff; }
+#dayScale { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 4; display: none; align-items: center; gap: 14px; pointer-events: none;
+  background: rgba(255,255,255,.8); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+#dayScale i { display: inline-block; width: 44px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+#dayScale .hint { color: var(--faint); }
 header .help { color: var(--faint); font-size: 12.5px; }
 
 #layout { display: grid; grid-template-columns: 270px 1fr 390px; height: calc(100% - 52px); }
@@ -105,6 +121,10 @@ aside { border-right: 1px solid var(--line); padding: 14px 16px 24px; }
 .item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item .n { color: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; }
 .item.zero { opacity: .45; }
+.item.day { font-weight: 600; margin-top: 6px; }
+.item.day:first-child { margin-top: 0; }
+.item.day .dot { width: 22px; border-radius: 4px; }
+.item:not(.day)[data-key=agenda] { padding-left: 14px; }
 .item .x { color: var(--faint); font-size: 14px; line-height: 1; padding: 0 2px; }
 .item .x:hover { color: var(--text); }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; display: inline-block; }
@@ -155,7 +175,7 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
 <body>
 <header>
   <h1><a href="index.html">Themenlandschaft</a></h1>
-  <select id="weekSel" title="Sitzungswoche"></select>
+  <span class="weekwrap"><button class="weekbtn" id="weekBtn" title="Sitzungswoche wählen"></button><div id="weekCal"></div></span>
   <span class="meta" id="meta"></span>
   <span class="spacer"></span>
   <span class="help">Scrollen: Zoom · Ziehen: Verschieben · Doppelklick: Zurücksetzen</span>
@@ -166,16 +186,15 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
 <div id="layout">
   <aside>
     <div class="sidebar-head"><b>Filter</b><span><span id="count"></span> · <button class="linkbtn" id="reset">zurücksetzen</button></span></div>
-    <div class="group collapsed" id="g-search"><div class="title">Suche<span class="arrow"></span></div><div class="content">
+    <div class="group" id="g-search"><div class="title">Suche<span class="arrow"></span></div><div class="content">
       <div class="searchrow"><input type="text" id="search" placeholder="Text, Name, Tagesordnungspunkt…"><button id="addSearch" title="Suchbegriff als Filter speichern (Enter)">+</button></div>
       <div class="list" id="searchList"></div>
     </div></div>
     <div class="group collapsed" id="g-fraction"><div class="title">Fraktion<span class="arrow"></span></div><div class="content"><div class="list" data-key="fraction"></div></div></div>
-    <div class="group collapsed" id="g-weekday"><div class="title">Tag<span class="arrow"></span></div><div class="content"><div class="list" data-key="weekday"></div></div></div>
-    <div class="group collapsed" id="g-agenda"><div class="title">Tagesordnungspunkt<span class="reload" data-key="agenda" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="agenda"></div></div></div>
+    <div class="group collapsed" id="g-agenda"><div class="title">Tagesordnung<span class="reload" data-key="agenda" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="agenda"></div></div></div>
     <div class="group collapsed" id="g-cluster"><div class="title">Thema<span class="reload" data-key="cluster" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="cluster"></div></div></div>
     <div class="group collapsed" id="g-speaker"><div class="title">Redner:in<span class="reload" data-key="speaker" title="Nach Häufigkeit in der aktuellen Ansicht sortieren">↻</span><span class="arrow"></span></div><div class="content"><div class="list" data-key="speaker"></div></div></div>
-    <div class="group collapsed" id="g-view"><div class="title">Anzeige<span class="arrow"></span></div><div class="content">
+    <div class="group" id="g-view"><div class="title">Anzeige<span class="arrow"></span></div><div class="content">
       <div class="segmented" id="color">
         <button data-mode="cluster" class="on">Thema</button><button data-mode="fraction">Fraktion</button><button data-mode="weekday">Tag</button><button data-mode="agenda">TOP</button><button data-mode="mdb">Rolle</button>
       </div>
@@ -186,7 +205,7 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
       <label class="toggle">Auswahl-Werkzeug (Lasso) <input type="checkbox" id="lasso"></label>
     </div></div>
   </aside>
-  <div id="map"><div id="labels"></div><div id="tip"></div></div>
+  <div id="map"><div id="labels"></div><div id="tip"></div><div id="dayScale"></div></div>
   <div id="panel"></div>
 </div>
 <script>
@@ -198,7 +217,16 @@ const PALETTE = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4
 const NOISE = '#d4d4d0';
 const FRACTION_ORDER = Object.keys(FRACTION_COLORS);
 const DAY_ORDER = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+const weekdayOf = d => DAY_ORDER[(new Date(d).getUTCDay() + 6) % 7];
 const clusterById = Object.fromEntries(DATA.clusters.map(c => [c.id, c]));
+const median = a => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1]; };
+const hsv = (h, s, v) => { const f = n => { const k = (n + h * 6) % 6; return Math.round(255 * v * (1 - s * Math.max(0, Math.min(k, 4 - k, 1)))); }; return `rgb(${f(5)},${f(3)},${f(1)})`; };
+const CLUSTER_COLOR = (() => {  // evenly spaced vivid hues, ordered by each cluster's angle around the map centre so the map reads like a colour wheel
+  const cx = median(S.map(s => s.x)), cy = median(S.map(s => s.y));
+  const angle = c => { const g = S.filter(s => s.cluster === c.id); return Math.atan2(median(g.map(s => s.y)) - cy, median(g.map(s => s.x)) - cx); };
+  const ordered = DATA.clusters.map(c => [c.id, angle(c)]).sort((a, b) => a[1] - b[1]);
+  return Object.fromEntries(ordered.map(([id], i) => [id, hsv(i / ordered.length, .75, .92)]));
+})();
 const ACRONYMS = new Set(['usa', 'nato', 'eu', 'uno', 'un', 'csd', 'ard', 'zdf', 'kfw', 'dfb', 'fifa', 'ki', 'eeg', 'geg', 'stpo', 'bgb', 'sgb', 'bka', 'bnd', 'öpnv', 'lng', 'co2', 'nis', 'tv', 'gkv', 'pkv', 'iwf', 'oecd', 'wto']);
 const cap = w => ACRONYMS.has(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1);
 const clusterLabel = (c, n = 3) => c < 0 ? 'ohne Thema' : clusterById[c].terms.slice(0, n).map(cap).join(' · ');
@@ -206,28 +234,58 @@ const excerpt = s => { const t = s.paragraphs.find(p => p[0] === 'text'); return
 const byId = Object.fromEntries(S.map(s => [s.id, s]));
 const fmt = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4);
 S.forEach(s => {
-  s.weekday = DAY_ORDER[(new Date(s.date).getUTCDay() + 6) % 7];
+  s.weekday = weekdayOf(s.date);
   s.befragung = s.agenda === 'Befragung der Bundesregierung';
   s.text = s.paragraphs.filter(p => p[0] === 'text').map(p => p[1]).join('\n');
   s.haystack = `${s.speaker}\n${s.role || ''}\n${s.agenda}\n${s.text}`.toLowerCase();
 });
 const AGENDA = [...Map.groupBy(S, s => s.agenda_id).values()].map(v => v[0]).sort((a, b) => a.agenda_id.localeCompare(b.agenda_id, 'de', {numeric: true}));
+const AGENDA_BY = Object.fromEntries(AGENDA.map(a => [a.agenda_id, a]));
 const AGENDA_COLOR = Object.fromEntries(AGENDA.map((s, i) => [s.agenda_id, PALETTE[i % PALETTE.length]]));
 const dates = [...new Set(S.map(s => s.date))].sort();
+const DAY_DATE = Object.fromEntries(dates.map(d => [weekdayOf(d), d]));
 document.getElementById('meta').textContent = `${fmt(dates[0])} – ${fmt(dates[dates.length - 1])} · ${S.length} Reden · ${DATA.clusters.length} Themen`;
 document.title = `Themenlandschaft ${DATA.week}`;
-const weekSel = document.getElementById('weekSel');
-DATA.weeks.forEach(w => weekSel.add(new Option(w, w, false, w === DATA.week)));
-weekSel.onchange = e => location.href = e.target.value + '.html';
+
+// day colouring: one sequential scale per sitting day (blue, orange, green, purple), light = early, dark = late
+const SCALES = [['#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5', '#08519c', '#08306b'], ['#fdd0a2', '#fdae6b', '#fd8d3c', '#f16913', '#d94801', '#a63603', '#7f2704'],
+  ['#c7e9c0', '#a1d99b', '#74c476', '#41ab5d', '#238b45', '#006d2c', '#00441b'], ['#dadaeb', '#bcbddc', '#9e9ac8', '#807dba', '#6a51a3', '#54278f', '#3f007d']];
+const heat = (day, t) => {
+  const sc = SCALES[day % SCALES.length], p = Math.min(Math.max(t, 0), 1) * (sc.length - 1), i = Math.floor(p), f = p - i;
+  const rgb = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16)), a = rgb(sc[i]), b = rgb(sc[Math.min(i + 1, sc.length - 1)]);
+  return `rgb(${a.map((c, k) => Math.round(c + (b[k] - c) * f)).join(',')})`;
+};
+Map.groupBy(S, s => s.date).forEach((g, d) => g.forEach((s, r) => s.dayColor = heat(dates.indexOf(d), (r + .5) / g.length)));  // payload order = speaking order
+const dayGradient = v => `linear-gradient(90deg, ${heat(dates.indexOf(DAY_DATE[v]), 0)}, ${heat(dates.indexOf(DAY_DATE[v]), 1)})`;
+
+// week picker: a calendar of both years, sitting weeks as links
+const weekBtn = document.getElementById('weekBtn'), weekCal = document.getElementById('weekCal'), weekSet = new Set(DATA.weeks);
+const [YEAR, KW] = DATA.week.split('-W').map(Number);
+weekBtn.textContent = `KW ${KW} · ${YEAR}`;
+const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+const shift = (d, n) => { const r = new Date(d); r.setUTCDate(d.getUTCDate() + n); return r; };
+const dm = d => `${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
+weekCal.innerHTML = [...new Set(DATA.weeks.map(w => w.slice(0, 4)))].map(y => {
+  const rows = MONTHS.map(() => []), jan4 = new Date(Date.UTC(y, 0, 4)), week1 = shift(jan4, -(jan4.getUTCDay() + 6) % 7);
+  for (let w = 1; w <= 53; w++) {
+    const mon = shift(week1, 7 * (w - 1)), thu = shift(mon, 3);  // an ISO week belongs to the year and month of its Thursday
+    if (thu.getUTCFullYear() !== +y) continue;
+    const id = `${y}-W${String(w).padStart(2, '0')}`, has = weekSet.has(id);
+    rows[thu.getUTCMonth()].push(`<a class="wk${has ? ' has' : ''}${id === DATA.week ? ' cur' : ''}"${has ? ` href="${id}.html"` : ''} title="KW ${w} · ${dm(mon)} – ${dm(shift(mon, 6))}">${w}</a>`);
+  }
+  return `<div><b>${y}</b>${rows.map((r, i) => `<div class="mo"><span>${MONTHS[i]}</span>${r.join('')}</div>`).join('')}</div>`;
+}).join('');
+weekBtn.onclick = e => { e.stopPropagation(); weekCal.classList.toggle('open'); };
 
 // --- filter groups: value of a speech, display name, colour ---------------------------
 const GROUPS = {
   fraction: { of: s => s.fraction, name: v => v, color: v => FRACTION_COLORS[v] || NOISE, order: (a, b) => (FRACTION_ORDER.indexOf(a) + 1 || 99) - (FRACTION_ORDER.indexOf(b) + 1 || 99) },
-  weekday: { of: s => s.weekday, name: v => v, color: v => PALETTE[DAY_ORDER.indexOf(v)], order: (a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b) },
-  agenda: { of: s => s.agenda_id, name: v => { const a = AGENDA.find(x => x.agenda_id === v); return `${a.weekday} · ${a.agenda}`; }, color: v => AGENDA_COLOR[v], order: (a, b) => a.localeCompare(b, 'de', {numeric: true}) },
-  cluster: { of: s => s.cluster, name: v => v < 0 ? 'ohne Thema' : clusterById[v].terms.join(' · '), color: v => v < 0 ? NOISE : PALETTE[v % PALETTE.length], order: (a, b) => (a < 0) - (b < 0) || a - b },
+  weekday: { of: s => s.weekday, name: v => `${v} ${fmt(DAY_DATE[v]).slice(0, 6)}`, color: v => heat(dates.indexOf(DAY_DATE[v]), .6), swatch: dayGradient, order: (a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b) },
+  agenda: { of: s => s.agenda_id, name: v => AGENDA_BY[v].agenda, color: v => AGENDA_COLOR[v], order: (a, b) => a.localeCompare(b, 'de', {numeric: true}) },
+  cluster: { of: s => s.cluster, name: v => v < 0 ? 'ohne Thema' : clusterById[v].terms.join(' · '), color: v => v < 0 ? NOISE : CLUSTER_COLOR[v], order: (a, b) => (a < 0) - (b < 0) || a - b },
   speaker: { of: s => s.speaker, name: v => v, color: v => FRACTION_COLORS[S.find(s => s.speaker === v).fraction] || NOISE, order: null },
 };
+document.getElementById('dayScale').innerHTML = dates.map(d => `<span><i style="background:${dayGradient(weekdayOf(d))}"></i>${GROUPS.weekday.name(weekdayOf(d))}</span>`).join('') + '<span class="hint">früh → spät</span>';
 const state = { mode: 'cluster', checked: Object.fromEntries(Object.keys(GROUPS).map(k => [k, new Set()])), terms: [], live: '', dim: false, befragung: false, open: '' };
 const totals = Object.fromEntries(Object.keys(GROUPS).map(k => [k, Map.groupBy(S, GROUPS[k].of)]));
 const listOrder = Object.fromEntries(Object.keys(GROUPS).map(k => {
@@ -259,11 +317,15 @@ decodeState();
 
 // --- sidebar --------------------------------------------------------------------------
 const listEls = Object.fromEntries([...document.querySelectorAll('.list[data-key]')].map(el => [el.dataset.key, el]));
+const items = k => document.querySelectorAll(`.item[data-key=${k}]`);
+const row = (k, v, cls = '') => { const g = GROUPS[k]; return `<label class="item${cls}" data-key="${k}" data-i="${listOrder[k].indexOf(v)}"><input type="checkbox"${state.checked[k].has(v) ? ' checked' : ''}><span class="dot" style="background:${(g.swatch || g.color)(v)}"></span><span class="name" title="${esc(g.name(v))}">${esc(g.name(v))}</span><span class="n"></span></label>`; };
 function renderList(k) {
-  const g = GROUPS[k];
-  listEls[k].innerHTML = listOrder[k].map(v => `<label class="item"><input type="checkbox"${state.checked[k].has(v) ? ' checked' : ''}><span class="dot" style="background:${g.color(v)}"></span><span class="name" title="${esc(g.name(v))}">${esc(g.name(v))}</span><span class="n"></span></label>`).join('');
-  listEls[k].querySelectorAll('input').forEach((input, i) => input.onchange = () => {
-    const v = listOrder[k][i];
+  if (k === 'weekday') k = 'agenda';  // days and their agenda items share one list
+  listEls[k].innerHTML = k === 'agenda'
+    ? listOrder.weekday.map(d => row('weekday', d, ' day') + listOrder.agenda.filter(a => AGENDA_BY[a].weekday === d).map(a => row('agenda', a)).join('')).join('')
+    : listOrder[k].map(v => row(k, v)).join('');
+  listEls[k].querySelectorAll('.item').forEach(it => it.querySelector('input').onchange = () => {
+    const k = it.dataset.key, v = listOrder[k][+it.dataset.i], input = it.querySelector('input');
     input.checked ? state.checked[k].add(v) : state.checked[k].delete(v);
     draw();
     if (k === 'agenda' && input.checked) { const gr = S.filter(s => s.agenda_id === v); showGroup(gr, gr[0].agenda, `${gr[0].weekday} ${fmt(gr[0].date)} · ${gr[0].top}`); }
@@ -271,7 +333,7 @@ function renderList(k) {
     if (k === 'cluster' && input.checked && v >= 0) showCluster(v);
   });
 }
-Object.keys(GROUPS).forEach(renderList);
+Object.keys(listEls).forEach(renderList);
 function renderSearchList() {
   const el = document.getElementById('searchList');
   el.innerHTML = state.terms.map((t, i) =>
@@ -303,7 +365,7 @@ document.querySelectorAll('#color button').forEach(b => b.onclick = () => { stat
 document.getElementById('reset').onclick = () => {
   for (const k in GROUPS) state.checked[k].clear();
   Object.assign(state, { mode: 'cluster', terms: [], live: '', dim: false, befragung: false, open: '' });
-  searchInput.value = ''; Object.keys(GROUPS).forEach(renderList); renderSearchList(); showHint(); draw();
+  searchInput.value = ''; Object.keys(listEls).forEach(renderList); renderSearchList(); showHint(); draw();
 };
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.activeElement !== searchInput) { state.open = ''; showHint(); draw(); } });
 const setSpeaker = name => { state.checked.speaker = new Set([name]); renderList('speaker'); draw(); showGroup(S.filter(s => s.speaker === name), name, 'alle Reden dieser Woche'); };
@@ -312,15 +374,18 @@ const setCluster = id => { state.checked.cluster = new Set([id]); renderList('cl
 function syncControls() {
   document.querySelectorAll('#color button').forEach(x => x.classList.toggle('on', x.dataset.mode === state.mode));
   ['dim', 'befragung'].forEach(id => document.getElementById(id).checked = state[id]);
+  document.querySelectorAll('.group .badge').forEach(b => b.remove());
   for (const k in GROUPS) {
-    const title = document.querySelector(`#g-${k} .title`);
-    title.querySelector('.badge')?.remove();
-    if (state.checked[k].size) title.querySelector('.arrow').insertAdjacentHTML('beforebegin', `<span class="badge">${state.checked[k].size}</span>`);
+    const n = state.checked[k].size, title = document.querySelector(`#g-${k === 'weekday' ? 'agenda' : k} .title`), badge = title.querySelector('.badge');
+    if (!n) continue;
+    if (badge) badge.textContent = +badge.textContent + n; else title.querySelector('.arrow').insertAdjacentHTML('beforebegin', `<span class="badge">${n}</span>`);
   }
 }
 
 // empty group = no filter; OR within a group, AND across groups; every active search term has to match
-const matches = s => Object.keys(GROUPS).every(k => !state.checked[k].size || state.checked[k].has(GROUPS[k].of(s)))
+// days and agenda items form one group in the sidebar, so a ticked day and a ticked item of another day are OR-ed too
+const dayOrItem = s => !(state.checked.weekday.size || state.checked.agenda.size) || state.checked.weekday.has(s.weekday) || state.checked.agenda.has(s.agenda_id);
+const matches = s => ['fraction', 'cluster', 'speaker'].every(k => !state.checked[k].size || state.checked[k].has(GROUPS[k].of(s))) && dayOrItem(s)
   && state.terms.every(t => !t.on || s.haystack.includes(t.term.toLowerCase()))
   && (state.befragung || state.checked.speaker.size || state.checked.agenda.size || !s.befragung);  // an explicit speaker/TOP filter overrides the Befragung hide
 
@@ -338,7 +403,7 @@ function draw() {
   document.getElementById('count').textContent = `${shown.length} von ${S.length}`;
   for (const k in GROUPS) {
     const counts = Map.groupBy(shown, GROUPS[k].of);
-    listEls[k].querySelectorAll('.item').forEach((el, i) => { const n = (counts.get(listOrder[k][i]) || []).length; el.querySelector('.n').textContent = n; el.classList.toggle('zero', !n); });
+    items(k).forEach(el => { const n = (counts.get(listOrder[k][+el.dataset.i]) || []).length; el.querySelector('.n').textContent = n; el.classList.toggle('zero', !n); });
   }
   document.querySelectorAll('#searchList .item').forEach((el, i) => el.querySelector('.n').textContent = S.filter(s => s.haystack.includes(state.terms[i].term.toLowerCase())).length);
   const size = s => sizeBy ? 5 + 11 * Math.sqrt(s.chars / 8000) : 8;
@@ -349,7 +414,7 @@ function draw() {
     return {
       type: 'scattergl', mode: 'markers', name: nameOf[mode](k),
       x: g.map(s => s.x), y: g.map(s => s.y), customdata: g.map(s => s.id), hoverinfo: 'none',
-      marker: { color: colorOf[mode](k), size: g.map(size), opacity: g.map(s => shownIds.has(s.id) ? .9 : .1), line: { width: 1, color: '#ffffff' } },
+      marker: { color: mode === 'weekday' ? g.map(s => s.dayColor) : colorOf[mode](k), size: g.map(size), opacity: g.map(s => shownIds.has(s.id) ? .9 : .1), line: { width: 1, color: '#ffffff' } },
     };
   });
   const live = state.live.length > 1 ? drawn.filter(s => s.haystack.includes(state.live)) : [];
@@ -358,7 +423,6 @@ function draw() {
   const open = byId[state.open];
   if (open) traces.push({ type: 'scattergl', mode: 'markers', name: 'geöffnet', showlegend: false, hoverinfo: 'skip',
     x: [open.x], y: [open.y], customdata: [open.id], marker: { color: 'rgba(0,0,0,0)', size: size(open) + 10, line: { width: 2, color: '#1f2328' } } });
-  const median = a => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1]; };
   labelAnchors = DATA.clusters.map(c => {
     const g = shown.filter(s => s.cluster === c.id);
     return g.length < 3 ? null : { id: c.id, n: g.length, x: median(g.map(s => s.x)), y: median(g.map(s => s.y)) };
@@ -368,9 +432,10 @@ function draw() {
     margin: { l: 16, r: 16, t: 16, b: 16 }, hovermode: 'closest',
     dragmode: document.getElementById('lasso').checked ? 'lasso' : 'pan',
     xaxis: { visible: false }, yaxis: { visible: false, scaleanchor: 'x' },
-    showlegend: mode !== 'cluster' && mode !== 'agenda', legend: { orientation: 'h', y: 0, x: 0.5, xanchor: 'center', yanchor: 'bottom', bgcolor: 'rgba(255,255,255,.7)' },
+    showlegend: mode === 'fraction' || mode === 'mdb', legend: { orientation: 'h', y: 0, x: 0.5, xanchor: 'center', yanchor: 'bottom', bgcolor: 'rgba(255,255,255,.7)' },
     uirevision: 'keep',
   }, { responsive: true, scrollZoom: true, displayModeBar: false, doubleClick: 'reset' }).then(placeLabels);
+  document.getElementById('dayScale').style.display = mode === 'weekday' ? 'flex' : 'none';
   tourCheck();
 }
 
@@ -387,7 +452,8 @@ function placeLabels() {
   const terms = zoom > 2 ? 4 : 3, zoomed = zoom > 1.6;
   const px = a => ({ x: xa.l2p(a.x) + fl._size.l, y: ya.l2p(a.y) + fl._size.t });
   const items = labelAnchors.map(a => ({ ...a, ...px(a) })).filter(a => a.x > 0 && a.x < W && a.y > 0 && a.y < H).sort((a, b) => b.n - a.n);
-  labelLayer.innerHTML = items.map(a => `<div class="lbl${zoomed ? ' zoomed' : ''}" data-c="${a.id}" style="left:${a.x}px;top:${a.y}px;color:${GROUPS.cluster.color(a.id)}">${dot(GROUPS.cluster.color(a.id))}<span style="color:#374151">${esc(clusterLabel(a.id, terms))}</span><span class="n">${a.n}</span></div>`).join('');
+  const colour = id => state.mode === 'cluster' ? GROUPS.cluster.color(id) : '#b4b4b0';  // labels carry the topic colour only when points do
+  labelLayer.innerHTML = items.map(a => `<div class="lbl${zoomed ? ' zoomed' : ''}" data-c="${a.id}" style="left:${a.x}px;top:${a.y}px;color:${colour(a.id)}">${dot(colour(a.id))}<span style="color:#374151">${esc(clusterLabel(a.id, terms))}</span><span class="n">${a.n}</span></div>`).join('');
   // greedy overlap resolution: bigger clusters first; a colliding label slides up or down, else hides
   const placed = [];
   labelLayer.querySelectorAll('.lbl').forEach((el, i) => {
@@ -416,7 +482,7 @@ const pick = (() => {
   return { cluster: cluster ? cluster.id : -1, clusterLabel: cluster ? clusterLabel(cluster.id) : '', agenda: spread ? spread.id : '', agendaTitle: spread ? spread.title : '', agendaClusters: spread ? spread.clusters : 0, speaker: speaker ? speaker[0] : '' };
 })();
 const expand = id => document.getElementById(id).classList.remove('collapsed');
-const listRow = (k, v) => listEls[k].querySelectorAll('.item')[listOrder[k].indexOf(v)];
+const listRow = (k, v) => document.querySelector(`.item[data-key=${k}][data-i="${listOrder[k].indexOf(v)}"]`);
 const TOURS = {
   woche: { title: 'Was war diese Woche los?', blurb: 'Karte lesen, ein Thema öffnen, eine Rede bis zur Quelle verfolgen.', steps: [
     { target: '#map', title: 'Die Landschaft', text: 'Jeder Punkt ist eine Rede dieser Sitzungswoche. Nahe Punkte handeln von Ähnlichem; die Labels sind die Themen, die sich aus den Reden ergeben.' },
@@ -491,7 +557,7 @@ function tourCheck() {
 }
 tourMenu.innerHTML = Object.entries(TOURS).map(([k, t]) => `<a class="t" href="#" onclick="startTour('${k}');return false"><b>${t.title}</b><span>${t.blurb} · ${t.steps.length} Schritte</span></a>`).join('');
 document.getElementById('tourBtn').onclick = e => { e.stopPropagation(); tourMenu.classList.toggle('open'); };
-document.addEventListener('click', e => { if (!tourMenu.contains(e.target)) tourMenu.classList.remove('open'); });
+document.addEventListener('click', e => { if (!tourMenu.contains(e.target)) tourMenu.classList.remove('open'); if (!weekCal.contains(e.target)) weekCal.classList.remove('open'); });
 window.addEventListener('resize', () => { if (tour.id) place(document.querySelector('.tour-target')); });
 
 // --- side panel -----------------------------------------------------------------------
