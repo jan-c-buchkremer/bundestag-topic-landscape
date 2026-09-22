@@ -51,6 +51,14 @@ works the same.
 - Regierungsbefragung turns are hidden by default (two-minute question/answer units under one agenda item); an
   explicit speaker or agenda filter shows them anyway.
 
+## Touren
+
+Three guided walkthroughs on the real data of a week, started from the **Tour** button in the header or
+from the cards on the index page (`<week>.html#tour=woche|debatte|person`). Each step spotlights one
+control and waits until you have done the action yourself: *Was war diese Woche los?* (map → topic → speech
+→ source), *Eine Debatte über die Landschaft verfolgen* (dim mode, colour by TOP, tick a TOP, colour by
+fraction) and *Einer Person folgen* (speaker list, profile, similar speeches by others, sharing the URL).
+
 ## How the corpus is cut
 
 - A sitting week is the ISO week of the sitting date. No sitting week in WP 21 crosses a Sunday.

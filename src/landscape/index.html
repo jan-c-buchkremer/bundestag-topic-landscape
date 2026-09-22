@@ -23,6 +23,12 @@ a.card:hover { border-color: #cdcdc8; transform: translateY(-1px); box-shadow: 0
 .topics { display: flex; flex-wrap: wrap; gap: 5px; }
 .topic { font-size: 12px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 2px 9px; }
 .card.small .topics { display: none; }
+.tours { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-bottom: 8px; }
+a.tour { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; color: inherit; text-decoration: none; transition: border-color .12s, transform .12s, box-shadow .12s; }
+a.tour:hover { border-color: #cdcdc8; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.05); }
+a.tour b { display: block; font-weight: 600; margin-bottom: 4px; }
+a.tour span { color: var(--muted); font-size: 13px; }
+a.tour em { display: block; margin-top: 8px; font-style: normal; color: var(--accent); font-size: 13px; }
 footer { color: var(--faint); font-size: 12.5px; margin-top: 48px; }
 footer a { color: var(--muted); }
 </style>
@@ -31,12 +37,21 @@ footer a { color: var(--muted); }
 <main>
   <h1>Themenlandschaft des Bundestages</h1>
   <p class="lead">Jede Sitzungswoche der 21. Wahlperiode als Karte: eine Rede ist ein Punkt, Nähe bedeutet ähnliche Inhalte, die Beschriftungen sind die Themen, die sich aus den Reden ergeben. Eine Woche wählen, dann nach Fraktion, Tag, Tagesordnungspunkt oder Redner:in filtern.</p>
+  <div class="year">Touren zum Einstieg</div>
+  <div class="tours" id="tours"></div>
   <div id="years"></div>
   <footer>Reden aus den Plenarprotokollen des Deutschen Bundestages (<a href="https://www.bundestag.de/services/opendata">Open Data</a>), aufbereitet mit <a href="https://github.com/jan-c-buchkremer/bundestag-data-foundation">bundestag-data-foundation</a>. Jede Rede verlinkt auf ihr Protokoll.</footer>
 </main>
 <script>
 const DATA = __DATA__;
 const fmt = d => d.slice(8, 10) + '.' + d.slice(5, 7) + '.';
+const TOURS = [  // ids and titles as in template.html
+  ['woche', 'Was war diese Woche los?', 'Karte lesen, ein Thema öffnen, eine Rede bis zur Quelle verfolgen.'],
+  ['debatte', 'Eine Debatte über die Landschaft verfolgen', 'Ein Tagesordnungspunkt ist kein Thema: sehen, wohin er sich verteilt und wer wo spricht.'],
+  ['person', 'Einer Person folgen', 'Alle Reden einer Person, ihre Themen und ähnliche Reden anderer.'],
+];
+const latest = DATA.weeks.filter(w => w.speeches >= 30).at(-1).week;
+document.getElementById('tours').innerHTML = TOURS.map(([id, title, blurb]) => `<a class="tour" href="${latest}.html#tour=${id}"><b>${title}</b><span>${blurb}</span><em>Tour starten in ${latest} →</em></a>`).join('');
 const years = Map.groupBy(DATA.weeks, w => w.week.slice(0, 4));
 document.getElementById('years').innerHTML = [...years].map(([y, ws]) => `
   <div class="year">${y}</div>
