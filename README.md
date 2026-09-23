@@ -32,6 +32,21 @@ Open `data/out/index.html` in a browser, or run `landscape serve` while editing 
 Inter font come from CDNs). Windows: `py -3.12 -m uv …`
 works the same.
 
+## Container
+
+CI tests every push; pushes to `main` and `deploy` also publish `ghcr.io/jan-c-buchkremer/bundestag-topic-landscape`
+(tags: branch name, short sha). The entrypoint is `landscape`, the working directory `/work`, so the defaults
+write to `/work/data/out` and `/work/data/landscape.sqlite`. The foundation store is expected at
+`/foundation/bundestag.sqlite` and the model cache at `/cache`:
+
+```sh
+docker run --rm -v "$BDF_DATA:/foundation" -v "$PWD/data:/work/data" -v "$PWD/hf-cache:/cache" \
+  ghcr.io/jan-c-buchkremer/bundestag-topic-landscape:main build --all
+```
+
+Mount the foundation directory writable: the store is in WAL mode and SQLite creates a `-shm` file even for
+read-only connections. The store is still opened with `mode=ro`.
+
 ## What the pages show
 
 `index.html` lists every sitting week with its main topics. Each week page:
