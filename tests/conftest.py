@@ -69,6 +69,7 @@ def conn():
             ("ID1/1", "ID1", 1, "text", LONG),
             ("ID1/2", "ID1", 2, "comment", "(Beifall)"),
             ("ID1/3", "ID1", 3, "chair", "Zwischenfrage?"),
+            ("ID1-2/1", "ID1-2", 1, "text", "Kurze Frage?"),
             ("ID1-3/1", "ID1-3", 1, "text", "Kurze Antwort."),
             ("ID0/1", "ID0", 1, "text", LONG),
             ("ID2/1", "ID2", 1, "text", LONG),

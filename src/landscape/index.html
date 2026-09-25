@@ -52,7 +52,7 @@ const TOURS = [  // ids and titles as in template.html
 ];
 const latest = DATA.weeks.filter(w => w.speeches >= 30).at(-1).week;
 document.getElementById('tours').innerHTML = TOURS.map(([id, title, blurb]) => `<a class="tour" href="${latest}.html#tour=${id}"><b>${title}</b><span>${blurb}</span><em>Tour starten in ${latest} →</em></a>`).join('');
-const years = Map.groupBy(DATA.weeks, w => w.week.slice(0, 4));
+const years = Map.groupBy(DATA.weeks.toReversed(), w => w.week.slice(0, 4));  // newest first
 document.getElementById('years').innerHTML = [...years].map(([y, ws]) => `
   <div class="year">${y}</div>
   <div class="grid">${ws.map(w => `

@@ -18,7 +18,10 @@ def test_load_week_rejoins_splits_and_fills_fraction(conn):
     assert set(by_id) == {"ID0", "ID1", "ID2"}  # ID1-2 is a short question, ID1-3 merged into ID1
     berg = by_id["ID1"]
     assert berg.part_ids == ["ID1", "ID1-3"] and berg.text.endswith("Kurze Antwort.")
-    assert [k for k, _ in berg.paragraphs] == ["text", "comment", "chair", "text"] and berg.n_comments == 1
+    assert [k for k, _ in berg.paragraphs] == ["text", "comment", "chair", "zwischenfrage", "text"]
+    assert berg.paragraphs[3] == ("zwischenfrage", "ID1-2") and berg.n_comments == 1
+    assert berg.linked["ID1-2"]["paragraphs"] == [("text", "Kurze Frage?"), ("antwort", "ID1")]
+    assert berg.start == ("2026-07-08", 2) and berg.end == ("2026-07-08", 4)
     assert berg.speaker == "Bernd Berg"
     assert by_id["ID2"].fraction == "SPD" and by_id["ID2"].role == "Ministerin"  # from person.party
     assert by_id["ID0"].fraction == corpus.NO_FRACTION
