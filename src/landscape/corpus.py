@@ -15,6 +15,7 @@ MIN_CHARS = 500  # shorter units are procedural remarks and single questions, se
 # speech.fraction is NULL for ministers; person.party fills the gap
 PARTY_TO_FRACTION = {"CDU": "CDU/CSU", "CSU": "CDU/CSU", "DIE LINKE.": "Die Linke"}
 NO_FRACTION = "ohne Fraktion"  # non-MdB ministers, Länder ministers
+MARKERS = {"zwischenfrage", "kurzintervention", "antwort"}  # paragraph kinds whose text is a speech id
 
 EINZELPLAN = {
     "1": "Bundespräsident", "2": "Bundestag", "3": "Bundesrat", "4": "Bundeskanzler", "5": "Auswärtiges Amt",
@@ -100,7 +101,10 @@ class Speech:
     pdf_url: str
     source_document_id: str
     part_ids: list[str]
-    paragraphs: list[tuple[str, str]] = field(default_factory=list)  # (kind, text) incl. interjections
+    start: tuple[str, int] = ("", 0)  # (date, position) of the first part
+    end: tuple[str, int] = ("", 0)  # … and of the last
+    paragraphs: list[tuple[str, str]] = field(default_factory=list)  # (kind, text) incl. interjections and markers
+    linked: dict[str, dict] = field(default_factory=dict)  # marker targets that are too short to be speeches
 
     @property
     def n_comments(self) -> int:
@@ -108,7 +112,7 @@ class Speech:
 
 
 _SQL = """
-SELECT s.id, st.date, s.person_id, s.speaker_name, s.fraction, s.speaker_role, s.text, s.source_document_id,
+SELECT s.id, st.date, s.position, s.person_id, s.speaker_name, s.fraction, s.speaker_role, s.text, s.source_document_id,
        st.pdf_url, p.party, a.id AS agenda_item_id, a.top_id, a.title AS agenda_title, a.drucksache_numbers
 FROM speech s
 JOIN sitting st ON st.id = s.sitting_id
@@ -126,17 +130,47 @@ ORDER BY sp.position
 """
 
 
+_KURZINTERVENTION = re.compile(r"Kurzintervention|Zwischenbemerkung")
+
+
+def _marker(main: Speech, other: Speech) -> tuple[str, str]:
+    """Another person speaking inside a rede: a Kurzintervention if the chair announced one, else a Zwischenfrage."""
+    chair = " ".join(t for k, t in main.paragraphs[-6:] if k == "chair")
+    return ("kurzintervention" if _KURZINTERVENTION.search(chair) else "zwischenfrage", other.id)
+
+
+def _assemble(parts: list[tuple[str, Speech]], by_part: dict[str, list[tuple[str, str]]]) -> None:
+    """Paragraphs of one rede's parts, with a marker in the main speech where someone else took the floor
+    and a closing marker in that person's speech pointing back to the main one."""
+    main = parts[0][1]
+    for i, (pid, sp) in enumerate(parts):
+        if sp is not main and parts[i - 1][1] is main:
+            marks = [j for j, (k, target) in enumerate(main.paragraphs) if k in MARKERS and target == sp.id]
+            # "Gestatten Sie …? – Bitte." between two parts of one question is not a second marker
+            if not marks or sum(len(t) for k, t in main.paragraphs[marks[-1] + 1 :] if k == "text") >= 200:
+                main.paragraphs.append(_marker(main, sp))
+        sp.paragraphs.extend(by_part[pid])
+    for other in {id(sp): sp for _, sp in parts if sp is not main}.values():
+        other.paragraphs.append(("antwort", main.id))
+
+
 def load_week(conn: sqlite3.Connection, week: str) -> list[Speech]:
-    """Speeches of one week with split parts re-joined and short units dropped."""
+    """Speeches of one week with split parts re-joined and short units dropped.
+
+    A rede split at Zwischenfragen (`ID…`, `ID…-2`, …) is re-joined per speaker; where another person spoke
+    in between, the main speech gets a ("zwischenfrage"|"kurzintervention", <speech id>) paragraph."""
     span = week_range(week)
     speeches: list[Speech] = []
     by_base: dict[tuple[str, str], Speech] = {}  # (rede base id, person) -> first part
+    rede: dict[str, list[tuple[str, Speech]]] = {}  # rede base id -> its parts in speaking order
     for r in conn.execute(_SQL, span):
         base = re.sub(r"-\d+$", "", r["id"])
         head = by_base.get((base, r["person_id"]))
         if head is not None:
             head.text += "\n\n" + r["text"]
             head.part_ids.append(r["id"])
+            head.end = (r["date"], r["position"])
+            rede[base].append((r["id"], head))
             continue
         sp = Speech(
             id=r["id"], date=r["date"], person_id=r["person_id"],
@@ -146,16 +180,23 @@ def load_week(conn: sqlite3.Connection, week: str) -> list[Speech]:
             agenda_title=short_title(r["agenda_title"], r["top_id"]),
             drucksachen=json.loads(r["drucksache_numbers"]), text=r["text"], pdf_url=r["pdf_url"],
             source_document_id=r["source_document_id"], part_ids=[r["id"]],
+            start=(r["date"], r["position"]), end=(r["date"], r["position"]),
         )  # fmt: skip
         by_base[(base, r["person_id"])] = sp
+        rede.setdefault(base, []).append((r["id"], sp))
         speeches.append(sp)
-    speeches = [s for s in speeches if len(s.text) >= MIN_CHARS]
 
     by_part: dict[str, list[tuple[str, str]]] = {pid: [] for s in speeches for pid in s.part_ids}
     for r in conn.execute(_SQL_PARAGRAPHS, span):
-        if r["speech_id"] in by_part:
-            by_part[r["speech_id"]].append((r["kind"], r["text"]))
-    for s in speeches:
-        for pid in s.part_ids:
-            s.paragraphs.extend(by_part[pid])
-    return speeches
+        by_part[r["speech_id"]].append((r["kind"], r["text"]))
+    for parts in rede.values():
+        _assemble(parts, by_part)
+
+    kept = [s for s in speeches if len(s.text) >= MIN_CHARS]
+    dropped = {s.id: s for s in speeches if len(s.text) < MIN_CHARS}
+    for s in kept:
+        for kind, target in s.paragraphs:
+            if kind in MARKERS and target in dropped:
+                d = dropped[target]
+                s.linked[target] = {"speaker": d.speaker, "fraction": d.fraction, "paragraphs": d.paragraphs}
+    return kept

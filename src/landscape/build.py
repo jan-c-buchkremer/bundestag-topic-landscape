@@ -21,6 +21,8 @@ def week_payload(
         {"id": c, "terms": terms, "agenda": agenda_of[c], "n": int((clustering.labels == c).sum())}
         for c, terms in sorted(clustering.terms.items())
     ]
+    order = sorted(speeches, key=lambda s: s.start)
+    following = {s.id: next((o.id for o in order if o.start > s.end), None) for s in speeches}  # skips Zwischenfragen
     points = [
         {
             "id": s.id,
@@ -40,11 +42,13 @@ def week_payload(
             "pdf": s.pdf_url,
             "cite": s.source_document_id,
             "similar": [speeches[j].id for j in near],
+            "next": following[s.id],
             "paragraphs": s.paragraphs,
         }  # fmt: skip
         for s, (x, y), label, near in zip(speeches, clustering.xy, clustering.labels, neighbours(vectors), strict=True)
     ]
-    return {"week": week, "weeks": weeks, "clusters": clusters, "speeches": points}
+    linked = {k: v for s in speeches for k, v in s.linked.items()}  # Zwischenfragen too short to be points
+    return {"week": week, "weeks": weeks, "clusters": clusters, "speeches": points, "linked": linked}
 
 
 def _inline(template: str, payload: dict) -> str:
