@@ -49,20 +49,23 @@ read-only connections. The store is still opened with `mode=ro`.
 
 ## What the pages show
 
-`index.html` lists every sitting week with its main topics. Each week page:
+`index.html` lists every sitting week with its main topics, newest first. Each week page:
 
 - One point per speech; position from UMAP on the speech embedding; topic colour and label from HDBSCAN + c-TF-IDF.
 - Colour by topic, fraction, day, **agenda item** or role. Agenda-item colouring shows where one debate spreads
-  across the landscape.
+  across the landscape; each item takes the hue family of its sitting day, light for early items, deep for late ones.
 - Filters as collapsible checkbox lists (fraction, day, agenda item, topic, speaker) with live counts: nothing
   checked means everything, OR within a list, AND across lists; ↻ re-sorts a list by frequency in the current view.
+  The checkbox filters; a click on the name opens that value's card without filtering.
 - Search: typing marks matches on the map, Enter turns the term into a saved filter (several terms are ANDed,
   each can be switched off or removed); matches are highlighted in the opened speech.
-- "Gefilterte abdunkeln" keeps filtered-out speeches on the map at 10 % opacity instead of hiding them.
+- Filtered-out speeches stay on the map at 10 % opacity ("Gefilterte abdunkeln", on by default) and point size
+  follows speech length (on by default). „zurücksetzen“ restores all of that, the list order and the zoom.
 - The view is kept in the URL, so it can be shared.
-- Click a point: the full speech with interjections and applause inline, citation and PDF link, and the five most
-  similar speeches of the week. Click a topic label, tick an agenda item or a speaker: a breakdown by fraction, topic,
-  agenda item and speaker, with the speeches listed. Lasso tool: the same breakdown for any hand-drawn selection.
+- Click a point: the full speech with interjections and applause inline, Zwischenfragen and Kurzinterventionen as
+  cards where they were asked, citation and PDF link, the next speech in speaking order and the five most similar
+  speeches of the week. Click a topic label or a name in a filter list: bar charts by fraction, day, topic, agenda
+  item and speaker, with the speeches listed; every bar opens its own card.
 - Regierungsbefragung turns are hidden by default (two-minute question/answer units under one agenda item); an
   explicit speaker or agenda filter shows them anyway.
 
@@ -77,7 +80,10 @@ fraction) and *Einer Person folgen* (speaker list, profile, similar speeches by 
 ## How the corpus is cut
 
 - A sitting week is the ISO week of the sitting date. No sitting week in WP 21 crosses a Sunday.
-- Speeches split by the foundation at Zwischenfragen (`ID…`, `ID…-2`, …) are re-joined per speaker.
+- Speeches split by the foundation at Zwischenfragen (`ID…`, `ID…-2`, …) are re-joined per speaker. Where another
+  person spoke in between, the main speech gets a marker paragraph pointing to that person's speech (a
+  Kurzintervention if the chair announced one, else a Zwischenfrage), and that speech a marker back. Questions
+  under 500 characters are not points; their text is shipped with the page and opens in place.
 - Speeches under 500 characters are dropped (procedural remarks, single questions).
 - Ministers have no fraction in the protocol; their party from the master data is used instead. Non-MdB
   ministers and Länder representatives are shown as "ohne Fraktion".

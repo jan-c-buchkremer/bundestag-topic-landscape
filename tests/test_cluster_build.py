@@ -32,6 +32,8 @@ def test_render_embeds_payload(conn):
         {"id": 0, "terms": ["miete", "wohnen"], "agenda": "Befragung der Bundesregierung", "n": 2}
     ]
     p = payload["speeches"][1]
+    assert [s["next"] for s in payload["speeches"]] == ["ID1", "ID2", None]
+    assert payload["linked"]["ID1-2"]["speaker"] == "Clara Cohn"
     assert p["comments"] == 1 and p["cluster"] == 0 and p["pdf"].endswith("21088.pdf") and len(p["similar"]) == 2
     html = build.render(payload)
     assert "__DATA__" not in html

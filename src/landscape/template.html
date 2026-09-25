@@ -117,7 +117,8 @@ aside { border-right: 1px solid var(--line); padding: 14px 16px 24px; }
 .list { max-height: 264px; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
 .item { display: flex; align-items: center; gap: 7px; padding: 3px 4px; border-radius: 6px; cursor: pointer; font-size: 12.5px; line-height: 1.35; }
 .item:hover { background: var(--bg); }
-.item input { margin: 0; accent-color: var(--accent); flex: none; }
+.item:hover .name { color: var(--accent); }
+.item input { margin: 0; accent-color: var(--accent); flex: none; cursor: pointer; }
 .item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item .n { color: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; }
 .item.zero { opacity: .45; }
@@ -165,7 +166,17 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
 .similar { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; margin-bottom: 6px; transition: border-color .12s, background .12s; }
 .similar:hover { border-color: #cdcdc8; background: var(--bg); }
 .similar .who { font-weight: 500; }
+.similar .who span { color: var(--faint); font-weight: 400; }
 .similar .what { color: var(--muted); font-size: 12px; }
+.similar .kind { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+.similar.marker { margin: 4px 0 12px; }
+.similar .full { display: none; margin-top: 6px; }
+.similar.open .full { display: block; }
+.similar.open .what { display: none; }
+#panel .similar .full p { font-size: 12.5px; margin: 0 0 6px; }
+#panel table.dist tr { cursor: pointer; }
+#panel table.dist tr:hover td:first-child { color: var(--accent); }
+#panel details summary { color: var(--muted); font-size: 12px; cursor: pointer; margin: 2px 0 4px; }
 .close { float: right; color: var(--faint); background: none; border: 0; font-size: 18px; line-height: 1; cursor: pointer; margin: -4px -6px 0 0; }
 .close:hover { color: var(--text); }
 
@@ -200,9 +211,8 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
       </div>
       <label class="toggle">Gefilterte abdunkeln statt ausblenden <input type="checkbox" id="dim"></label>
       <label class="toggle">Regierungsbefragung zeigen <input type="checkbox" id="befragung"></label>
-      <label class="toggle">Größe nach Redelänge <input type="checkbox" id="sizeByLength"></label>
-      <label class="toggle">Themen-Labels <input type="checkbox" id="showLabels" checked></label>
-      <label class="toggle">Auswahl-Werkzeug (Lasso) <input type="checkbox" id="lasso"></label>
+      <label class="toggle">Größe nach Redelänge <input type="checkbox" id="size"></label>
+      <label class="toggle">Themen-Labels <input type="checkbox" id="showLabels"></label>
     </div></div>
   </aside>
   <div id="map"><div id="labels"></div><div id="tip"></div><div id="dayScale"></div></div>
@@ -213,7 +223,7 @@ const DATA = __DATA__;
 const S = DATA.speeches;
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const FRACTION_COLORS = { 'CDU/CSU': css('--cdu'), 'SPD': css('--spd'), 'AfD': css('--afd'), 'BÜNDNIS 90/DIE GRÜNEN': css('--gru'), 'Die Linke': css('--lin'), 'fraktionslos': css('--frl'), 'ohne Fraktion': css('--reg') };
-const PALETTE = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948','#8db8ea','#f5a88a','#7ed4b3','#f5c96a','#f3b4c9','#6fbf6f','#a49bd9','#f09a9a','#1b4f9c','#b3461c','#127a55','#9c6a00','#b04a78','#004d00','#2f2470','#a12726'];
+const ROLE_COLORS = ['#2a78d6', '#eb6834'];  // Abgeordnete, Regierung
 const NOISE = '#d4d4d0';
 const FRACTION_ORDER = Object.keys(FRACTION_COLORS);
 const DAY_ORDER = ['Mo','Di','Mi','Do','Fr','Sa','So'];
@@ -241,8 +251,15 @@ S.forEach(s => {
 });
 const AGENDA = [...Map.groupBy(S, s => s.agenda_id).values()].map(v => v[0]).sort((a, b) => a.agenda_id.localeCompare(b.agenda_id, 'de', {numeric: true}));
 const AGENDA_BY = Object.fromEntries(AGENDA.map(a => [a.agenda_id, a]));
-const AGENDA_COLOR = Object.fromEntries(AGENDA.map((s, i) => [s.agenda_id, PALETTE[i % PALETTE.length]]));
 const dates = [...new Set(S.map(s => s.date))].sort();
+const DAY_HUES = [.585, .07, .36, .74];  // blue, orange, green, purple: the hues of the day scales below
+const AGENDA_COLOR = Object.fromEntries([...Map.groupBy(AGENDA, a => a.date)].flatMap(([d, items]) => {
+  const h = DAY_HUES[dates.indexOf(d) % DAY_HUES.length];  // AGENDA holds each item's first speech, so S order = speaking order
+  return items.sort((a, b) => S.indexOf(a) - S.indexOf(b)).map((a, j) => {
+    const t = items.length > 1 ? j / (items.length - 1) : .5;
+    return [a.agenda_id, hsv((h + (t - .5) * .12 + 1) % 1, .4 + .5 * t, .95 - .27 * t)];
+  });
+}));
 const DAY_DATE = Object.fromEntries(dates.map(d => [weekdayOf(d), d]));
 document.getElementById('meta').textContent = `${fmt(dates[0])} – ${fmt(dates[dates.length - 1])} · ${S.length} Reden · ${DATA.clusters.length} Themen`;
 document.title = `Themenlandschaft ${DATA.week}`;
@@ -286,12 +303,15 @@ const GROUPS = {
   speaker: { of: s => s.speaker, name: v => v, color: v => FRACTION_COLORS[S.find(s => s.speaker === v).fraction] || NOISE, order: null },
 };
 document.getElementById('dayScale').innerHTML = dates.map(d => `<span><i style="background:${dayGradient(weekdayOf(d))}"></i>${GROUPS.weekday.name(weekdayOf(d))}</span>`).join('') + '<span class="hint">früh → spät</span>';
-const state = { mode: 'cluster', checked: Object.fromEntries(Object.keys(GROUPS).map(k => [k, new Set()])), terms: [], live: '', dim: false, befragung: false, open: '' };
+const DEFAULTS = { mode: 'cluster', terms: [], live: '', dim: true, befragung: false, size: true, showLabels: true, open: '' };
+const TOGGLES = ['dim', 'befragung', 'size', 'showLabels'];
+const state = { ...DEFAULTS, checked: Object.fromEntries(Object.keys(GROUPS).map(k => [k, new Set()])) };
 const totals = Object.fromEntries(Object.keys(GROUPS).map(k => [k, Map.groupBy(S, GROUPS[k].of)]));
-const listOrder = Object.fromEntries(Object.keys(GROUPS).map(k => {
+const initialOrder = k => {
   const g = GROUPS[k], vals = [...totals[k].keys()];
-  return [k, g.order ? vals.sort(g.order) : vals.sort((a, b) => totals[k].get(b).length - totals[k].get(a).length)];
-}));
+  return g.order ? vals.sort(g.order) : vals.sort((a, b) => totals[k].get(b).length - totals[k].get(a).length);
+};
+const listOrder = Object.fromEntries(Object.keys(GROUPS).map(k => [k, initialOrder(k)]));
 
 // --- URL hash keeps the view shareable ----------------------------------------------
 const encodeState = () => {
@@ -299,8 +319,7 @@ const encodeState = () => {
   if (state.mode !== 'cluster') h.set('farbe', state.mode);
   for (const k in GROUPS) if (state.checked[k].size) h.set(k, [...state.checked[k]].join('|'));
   if (state.terms.length) h.set('suche', state.terms.filter(t => t.on).map(t => t.term).join('|'));
-  if (state.dim) h.set('dim', '1');
-  if (state.befragung) h.set('befragung', '1');
+  for (const k of TOGGLES) if (state[k] !== DEFAULTS[k]) h.set(k, state[k] ? '1' : '0');
   if (state.open) h.set('rede', state.open);
   history.replaceState(null, '', h.size ? '#' + h : location.pathname);
 };
@@ -310,7 +329,8 @@ const decodeState = () => {
   if (h.get('farbe')) state.mode = h.get('farbe');
   for (const k in GROUPS) (h.get(k) || '').split('|').filter(Boolean).forEach(v => state.checked[k].add(k === 'cluster' ? +v : v));
   state.terms = (h.get('suche') || '').split('|').filter(Boolean).map(term => ({ term, on: true }));
-  state.dim = h.get('dim') === '1'; state.befragung = h.get('befragung') === '1'; state.open = h.get('rede') || '';
+  for (const k of TOGGLES) if (h.has(k)) state[k] = h.get(k) === '1';
+  state.open = h.get('rede') || '';
   startTourId = h.get('tour') || '';
 };
 decodeState();
@@ -318,28 +338,29 @@ decodeState();
 // --- sidebar --------------------------------------------------------------------------
 const listEls = Object.fromEntries([...document.querySelectorAll('.list[data-key]')].map(el => [el.dataset.key, el]));
 const items = k => document.querySelectorAll(`.item[data-key=${k}]`);
-const row = (k, v, cls = '') => { const g = GROUPS[k]; return `<label class="item${cls}" data-key="${k}" data-i="${listOrder[k].indexOf(v)}"><input type="checkbox"${state.checked[k].has(v) ? ' checked' : ''}><span class="dot" style="background:${(g.swatch || g.color)(v)}"></span><span class="name" title="${esc(g.name(v))}">${esc(g.name(v))}</span><span class="n"></span></label>`; };
+const row = (k, v, cls = '') => { const g = GROUPS[k]; return `<div class="item${cls}" data-key="${k}" data-i="${listOrder[k].indexOf(v)}" title="${esc(g.name(v))} – Häkchen filtert, Klick zeigt die Übersicht"><input type="checkbox"${state.checked[k].has(v) ? ' checked' : ''}><span class="dot" style="background:${(g.swatch || g.color)(v)}"></span><span class="name">${esc(g.name(v))}</span><span class="n"></span></div>`; };
 function renderList(k) {
   if (k === 'weekday') k = 'agenda';  // days and their agenda items share one list
   listEls[k].innerHTML = k === 'agenda'
     ? listOrder.weekday.map(d => row('weekday', d, ' day') + listOrder.agenda.filter(a => AGENDA_BY[a].weekday === d).map(a => row('agenda', a)).join('')).join('')
     : listOrder[k].map(v => row(k, v)).join('');
-  listEls[k].querySelectorAll('.item').forEach(it => it.querySelector('input').onchange = () => {
+  listEls[k].querySelectorAll('.item').forEach(it => {
     const k = it.dataset.key, v = listOrder[k][+it.dataset.i], input = it.querySelector('input');
-    input.checked ? state.checked[k].add(v) : state.checked[k].delete(v);
-    draw();
-    if (k === 'agenda' && input.checked) { const gr = S.filter(s => s.agenda_id === v); showGroup(gr, gr[0].agenda, `${gr[0].weekday} ${fmt(gr[0].date)} · ${gr[0].top}`); }
-    if (k === 'speaker' && input.checked) showGroup(S.filter(s => s.speaker === v), v, 'alle Reden dieser Woche');
-    if (k === 'cluster' && input.checked && v >= 0) showCluster(v);
+    input.onchange = () => { input.checked ? state.checked[k].add(v) : state.checked[k].delete(v); draw(); };
+    it.onclick = e => { if (e.target !== input) showCard(k, v); };
   });
 }
 Object.keys(listEls).forEach(renderList);
 function renderSearchList() {
   const el = document.getElementById('searchList');
   el.innerHTML = state.terms.map((t, i) =>
-    `<label class="item"><input type="checkbox"${t.on ? ' checked' : ''} data-i="${i}"><span class="name">„${esc(t.term)}“</span><span class="n"></span><span class="x" data-i="${i}" title="Entfernen">×</span></label>`).join('');
-  el.querySelectorAll('input').forEach(input => input.onchange = () => { state.terms[+input.dataset.i].on = input.checked; draw(); });
-  el.querySelectorAll('.x').forEach(x => x.onclick = e => { e.preventDefault(); state.terms.splice(+x.dataset.i, 1); renderSearchList(); draw(); });
+    `<div class="item" data-i="${i}"><input type="checkbox"${t.on ? ' checked' : ''}><span class="name">„${esc(t.term)}“</span><span class="n"></span><span class="x" title="Entfernen">×</span></div>`).join('');
+  el.querySelectorAll('.item').forEach(it => {
+    const i = +it.dataset.i, input = it.querySelector('input');
+    input.onchange = () => { state.terms[i].on = input.checked; draw(); };
+    it.querySelector('.x').onclick = () => { state.terms.splice(i, 1); renderSearchList(); draw(); };
+    it.onclick = e => { if (e.target !== input && !e.target.classList.contains('x')) { const term = state.terms[i].term; showGroup(S.filter(s => s.haystack.includes(term.toLowerCase())), `„${term}“`, 'Suchbegriff'); } };
+  });
 }
 renderSearchList();
 const searchInput = document.getElementById('search');
@@ -360,20 +381,23 @@ document.querySelectorAll('.reload').forEach(r => r.onclick = () => {
   renderList(k); draw();
 });
 document.querySelectorAll('#color button').forEach(b => b.onclick = () => { state.mode = b.dataset.mode; draw(); });
-['dim', 'befragung'].forEach(id => document.getElementById(id).onchange = e => { state[id] = e.target.checked; draw(); });
-['sizeByLength', 'showLabels', 'lasso'].forEach(id => document.getElementById(id).onchange = draw);
+TOGGLES.forEach(id => document.getElementById(id).onchange = e => { state[id] = e.target.checked; draw(); });
+// reset: every filter, toggle, list order and the zoom back to how the page opens
+let view = 0;  // Plotly keeps zoom/pan while uirevision stays the same; a new value re-fits the map
 document.getElementById('reset').onclick = () => {
-  for (const k in GROUPS) state.checked[k].clear();
-  Object.assign(state, { mode: 'cluster', terms: [], live: '', dim: false, befragung: false, open: '' });
-  searchInput.value = ''; Object.keys(listEls).forEach(renderList); renderSearchList(); showHint(); draw();
+  for (const k in GROUPS) { state.checked[k].clear(); listOrder[k] = initialOrder(k); }
+  Object.assign(state, DEFAULTS, { terms: [] });
+  flags.reloaded = {}; clearTimeout(typing); searchInput.value = ''; view++;
+  Object.keys(listEls).forEach(renderList); renderSearchList(); showHint(); draw();
 };
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.activeElement !== searchInput) { state.open = ''; showHint(); draw(); } });
-const setSpeaker = name => { state.checked.speaker = new Set([name]); renderList('speaker'); draw(); showGroup(S.filter(s => s.speaker === name), name, 'alle Reden dieser Woche'); };
-const setCluster = id => { state.checked.cluster = new Set([id]); renderList('cluster'); draw(); if (id >= 0) showCluster(id); };
+const setOnly = (k, v) => { state.checked[k] = new Set([v]); renderList(k); draw(); };  // filter to one value
+const setSpeaker = name => { setOnly('speaker', name); showCard('speaker', name); };
+const setCluster = id => { setOnly('cluster', id); if (id >= 0) showCluster(id); };
 
 function syncControls() {
   document.querySelectorAll('#color button').forEach(x => x.classList.toggle('on', x.dataset.mode === state.mode));
-  ['dim', 'befragung'].forEach(id => document.getElementById(id).checked = state[id]);
+  TOGGLES.forEach(id => document.getElementById(id).checked = state[id]);
   document.querySelectorAll('.group .badge').forEach(b => b.remove());
   for (const k in GROUPS) {
     const n = state.checked[k].size, title = document.querySelector(`#g-${k === 'weekday' ? 'agenda' : k} .title`), badge = title.querySelector('.badge');
@@ -391,14 +415,14 @@ const matches = s => ['fraction', 'cluster', 'speaker'].every(k => !state.checke
 
 // --- drawing --------------------------------------------------------------------------
 const keyOf = { cluster: s => s.cluster, fraction: s => s.fraction, weekday: s => s.weekday, agenda: s => s.agenda_id, mdb: s => s.role ? 'Regierung' : 'Abgeordnete' };
-const colorOf = { cluster: GROUPS.cluster.color, fraction: GROUPS.fraction.color, weekday: GROUPS.weekday.color, agenda: GROUPS.agenda.color, mdb: k => k === 'Abgeordnete' ? PALETTE[0] : PALETTE[1] };
+const colorOf = { cluster: GROUPS.cluster.color, fraction: GROUPS.fraction.color, weekday: GROUPS.weekday.color, agenda: GROUPS.agenda.color, mdb: k => ROLE_COLORS[+(k !== 'Abgeordnete')] };
 const nameOf = { cluster: clusterLabel, fraction: k => k, weekday: k => k, agenda: k => GROUPS.agenda.name(k).slice(0, 40), mdb: k => k };
 const order = { cluster: GROUPS.cluster.order, fraction: GROUPS.fraction.order, weekday: GROUPS.weekday.order, agenda: GROUPS.agenda.order, mdb: (a, b) => a < b ? -1 : 1 };
 const FONT = 'Inter, system-ui, sans-serif';
 
 function draw() {
   syncControls(); encodeState();
-  const mode = state.mode, sizeBy = document.getElementById('sizeByLength').checked;
+  const mode = state.mode, sizeBy = state.size;
   const shown = S.filter(matches), shownIds = new Set(shown.map(s => s.id));
   document.getElementById('count').textContent = `${shown.length} von ${S.length}`;
   for (const k in GROUPS) {
@@ -430,10 +454,10 @@ function draw() {
   Plotly.react('map', traces, {
     paper_bgcolor: css('--bg'), plot_bgcolor: css('--bg'), font: { color: css('--muted'), family: FONT, size: 12 },
     margin: { l: 16, r: 16, t: 16, b: 16 }, hovermode: 'closest',
-    dragmode: document.getElementById('lasso').checked ? 'lasso' : 'pan',
+    dragmode: 'pan',
     xaxis: { visible: false }, yaxis: { visible: false, scaleanchor: 'x' },
     showlegend: mode === 'fraction' || mode === 'mdb', legend: { orientation: 'h', y: 0, x: 0.5, xanchor: 'center', yanchor: 'bottom', bgcolor: 'rgba(255,255,255,.7)' },
-    uirevision: 'keep',
+    uirevision: view,
   }, { responsive: true, scrollZoom: true, displayModeBar: false, doubleClick: 'reset' }).then(placeLabels);
   document.getElementById('dayScale').style.display = mode === 'weekday' ? 'flex' : 'none';
   tourCheck();
@@ -446,7 +470,7 @@ let labelAnchors = [];
 const labelLayer = document.getElementById('labels');
 function placeLabels() {
   const fl = map._fullLayout;
-  if (!fl || !document.getElementById('showLabels').checked) { labelLayer.innerHTML = ''; return; }
+  if (!fl || !state.showLabels) { labelLayer.innerHTML = ''; return; }
   const xa = fl.xaxis, ya = fl.yaxis, W = map.clientWidth, H = map.clientHeight;
   const zoom = SPAN / (xa.range[1] - xa.range[0]);  // 1 ≈ the whole week in view
   const terms = zoom > 2 ? 4 : 3, zoomed = zoom > 1.6;
@@ -472,7 +496,7 @@ function placeLabels() {
 
 // --- tours: guided walkthroughs; the user performs each step, the page state tells the engine it is done ----
 let panelKind = 'hint';
-const flags = { hovered: false, reloaded: {} };
+const flags = { hovered: false, reloaded: {}, card: {} };
 const pick = (() => {
   const cluster = [...DATA.clusters].sort((a, b) => b.n - a.n)[0];
   const spread = [...Map.groupBy(S.filter(s => !s.befragung), s => s.agenda_id)].filter(([, v]) => v.length >= 8)
@@ -490,12 +514,12 @@ const TOURS = {
     { target: () => document.querySelector(`.lbl[data-c="${pick.cluster}"]`) || document.getElementById('map'), title: 'Das größte Thema', text: '<b>Klicke das Label „{cluster}“</b> – das größte Thema der Woche.', done: () => panelKind === 'cluster' },
     { target: '#panel', title: 'Wer besetzt das Thema', text: 'Die Balken zeigen, welche Fraktion wie oft zu diesem Thema gesprochen hat, darunter die Tagesordnungspunkte und die Redner:innen (anklickbar).' },
     { target: '#map', title: 'Eine Rede öffnen', text: '<b>Klicke einen Punkt.</b>', done: () => state.open !== '' },
-    { target: '#panel', title: 'Die Rede', text: 'Der volle Text mit Zwischenrufen und Beifall an ihrer Stelle. Der Link führt zum Plenarprotokoll als PDF, ganz unten stehen die fünf ähnlichsten Reden der Woche.' },
+    { target: '#panel', title: 'Die Rede', text: 'Der volle Text mit Zwischenrufen, Beifall und Zwischenfragen an ihrer Stelle. Der Link führt zum Plenarprotokoll als PDF, ganz unten stehen die nächste Rede und die fünf ähnlichsten Reden der Woche.' },
     { target: '#map', title: 'Schließen', text: '<b>Klicke den Punkt noch einmal</b> oder drücke <b>Esc</b>.', done: () => state.open === '' },
   ] },
   debatte: { title: 'Eine Debatte über die Landschaft verfolgen', blurb: 'Ein Tagesordnungspunkt ist kein Thema: sehen, wohin er sich verteilt und wer wo spricht.', steps: [
     { intro: true, title: 'Debatte ≠ Thema', text: 'Ein Tagesordnungspunkt ist eine Debatte. Die Karte ordnet Reden nach Inhalt – eine Debatte verteilt sich deshalb oft über mehrere Themen. In dieser Tour färbst du die Karte nach Debatten und siehst, wer wo spricht.' },
-    { target: () => document.getElementById('dim').closest('.toggle'), prepare: () => expand('g-view'), keepMap: true, title: 'Kontext behalten', text: '<b>Schalte „Gefilterte abdunkeln“ ein.</b> Gefilterte Reden bleiben dann blass sichtbar, statt zu verschwinden.', done: () => state.dim },
+    { target: () => document.getElementById('dim').closest('.toggle'), prepare: () => { expand('g-view'); if (!state.dim) { state.dim = true; draw(); } }, keepMap: true, title: 'Kontext behalten', text: '„Gefilterte abdunkeln“ ist eingeschaltet: gefilterte Reden bleiben blass sichtbar, statt zu verschwinden. So bleibt der Rest der Woche als Kontext stehen.' },
     { target: '#color button[data-mode=agenda]', keepMap: true, title: 'Farbe nach Tagesordnungspunkt', text: '<b>Wähle die Farbe „TOP“.</b> Jede Debatte bekommt eine eigene Farbe.', done: () => state.mode === 'agenda' },
     { target: '#map', title: 'Verteilung', text: '„{agenda}“ verteilt sich auf <b>{agendaClusters} Themen</b>. Die Farbe dieser Debatte taucht an mehreren Stellen der Karte auf.' },
     { target: () => listRow('agenda', pick.agenda), prepare: () => { expand('g-agenda'); listRow('agenda', pick.agenda)?.scrollIntoView({ block: 'center' }); }, keepMap: true, title: 'Nur diese Debatte', text: '<b>Hake „{agenda}“ an.</b> Alles andere wird abgedunkelt.', done: () => state.checked.agenda.has(pick.agenda) },
@@ -505,10 +529,10 @@ const TOURS = {
   person: { title: 'Einer Person folgen', blurb: 'Alle Reden einer Person, ihre Themen und ähnliche Reden anderer.', steps: [
     { intro: true, title: 'Eine Person', text: 'Jede Rede gehört zu einer Person. In dieser Tour wählst du eine aus, siehst ihre Themen und Reden der Woche und springst über ähnliche Reden zu anderen Personen.' },
     { target: '#g-speaker .reload', prepare: () => expand('g-speaker'), title: 'Die aktivsten zuerst', text: '<b>Klicke ↻</b> neben „Redner:in“. Die Liste wird nach Häufigkeit sortiert.', done: () => flags.reloaded.speaker },
-    { target: () => listEls.speaker.querySelector('.item'), keepMap: true, title: 'Eine Person wählen', text: '<b>Wähle eine Person aus</b>, zum Beispiel {speaker}.', done: () => state.checked.speaker.size === 1 },
-    { target: '#panel', title: 'Das Profil der Woche', text: 'Themen, Tagesordnungspunkte und alle Reden dieser Person. Bei einem Personenfilter werden auch Antworten aus der Regierungsbefragung gezeigt.' },
+    { target: () => listEls.speaker.querySelector('.item'), keepMap: true, title: 'Eine Person wählen', text: '<b>Klicke auf einen Namen</b>, zum Beispiel {speaker}. Der Name öffnet das Profil, das Häkchen davor würde die Karte filtern.', done: () => panelKind === 'group' && flags.card.k === 'speaker' },
+    { target: '#panel', title: 'Das Profil der Woche', text: 'Fraktion, Tage, Themen und Tagesordnungspunkte dieser Person als Balken, darunter alle ihre Reden – auch Antworten aus der Regierungsbefragung.' },
     { target: '#panel', keepMap: true, title: 'Eine Rede öffnen', text: '<b>Öffne eine Rede aus der Liste.</b>', done: () => state.open !== '' },
-    { target: '#panel', keepMap: true, title: 'Über Fraktionsgrenzen', text: '<b>Klicke unter „Ähnliche Reden“ eine Rede einer anderen Person.</b> So springst du von Argument zu Gegenargument.', done: () => state.open !== '' && byId[state.open].speaker !== [...state.checked.speaker][0] },
+    { target: '#panel', keepMap: true, title: 'Über Fraktionsgrenzen', text: '<b>Klicke unter „Ähnliche Reden“ eine Rede einer anderen Person.</b> So springst du von Argument zu Gegenargument.', done: () => state.open !== '' && byId[state.open].speaker !== flags.card.v },
     { target: '#meta', title: 'Teilen', text: 'Alles, was du eingestellt hast, steckt in der Adresszeile. Kopiere die URL, um genau diese Ansicht zu teilen.' },
   ] },
 };
@@ -568,36 +592,59 @@ const highlight = t => {
   const terms = state.terms.filter(x => x.on).map(x => x.term).concat(state.live.length > 1 ? [state.live] : []);
   return terms.reduce((h, term) => h.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`), esc(t));
 };
-const bars = (items, colorOf) => `<table>${items.map(([k, n, total]) =>
-  `<tr><td>${dot(colorOf(k))} ${esc(k)}<div class="bar"><i style="width:${100 * n / total}%;background:${colorOf(k)}"></i></div></td><td>${n}</td></tr>`).join('')}</table>`;
-const breakdown = (g, withTopics = true) => {
-  const byF = Map.groupBy(g, s => s.fraction), byA = Map.groupBy(g, s => s.agenda_id), byC = Map.groupBy(g, s => s.cluster), byS = Map.groupBy(g, s => s.speaker);
-  return `
-    <h3>Fraktionen</h3>${bars(listOrder.fraction.filter(f => byF.has(f)).map(f => [f, byF.get(f).length, g.length]), GROUPS.fraction.color)}
-    ${withTopics ? '<h3>Themen</h3>' + bars([...byC].sort((a, b) => b[1].length - a[1].length).map(([c, v]) => [clusterLabel(c), v.length, g.length]), () => PALETTE[0]) : ''}
-    <h3>Tagesordnungspunkte</h3><ul>${[...byA.values()].sort((a, b) => b.length - a.length).map(v => `<li>${dot(AGENDA_COLOR[v[0].agenda_id])} ${esc(v[0].agenda.slice(0, 110))} <span class="sub">${v[0].weekday} · ${v.length}</span></li>`).join('')}</ul>
-    <h3>Redner:innen</h3><p>${[...byS].sort((a, b) => b[1].length - a[1].length).slice(0, 12).map(([n, v]) => `<a href="#" onclick="setSpeaker(${JSON.stringify(n)});return false">${esc(n)}</a>${v.length > 1 ? ' (' + v.length + ')' : ''}`).join(', ')}</p>`;
+// info cards: every distribution of a set of speeches as bars; a row opens that value's own card
+const DIMS = [['fraction', 'Fraktionen'], ['weekday', 'Tage'], ['cluster', 'Themen'], ['agenda', 'Tagesordnungspunkte'], ['speaker', 'Redner:innen']];
+const barName = { weekday: GROUPS.weekday.name, agenda: v => AGENDA_BY[v].agenda, cluster: v => clusterLabel(v), fraction: v => v, speaker: v => v };
+const bars = (k, g) => {
+  const by = Map.groupBy(g, GROUPS[k].of), vals = [...by.keys()], max = Math.max(...[...by.values()].map(v => v.length));
+  if (k === 'fraction' || k === 'weekday') vals.sort(GROUPS[k].order); else vals.sort((a, b) => by.get(b).length - by.get(a).length);
+  const tr = v => { const n = by.get(v).length, c = GROUPS[k].color(v);
+    return `<tr data-card="${k}" data-v="${esc(v)}"><td>${dot(c)} ${esc(barName[k](v))}<div class="bar"><i style="width:${100 * n / max}%;background:${c}"></i></div></td><td>${n}</td></tr>`; };
+  const head = vals.slice(0, 12).map(tr).join(''), rest = vals.slice(12);
+  return `<table class="dist">${head}</table>${rest.length ? `<details><summary>${rest.length} weitere</summary><table class="dist">${rest.map(tr).join('')}</table></details>` : ''}`;
 };
+const breakdown = (g, skip) => DIMS.filter(([k]) => k !== skip).map(([k, title]) => `<h3>${title}</h3>${bars(k, g)}`).join('');
+const speechCard = (o, what, head = '') => `<div class="similar" data-open="${o.id}">${head}<div class="who">${dot(GROUPS.fraction.color(o.fraction))} ${esc(o.speaker)} <span>· ${esc(o.fraction)}${o.weekday ? ' · ' + o.weekday : ''}</span></div><div class="what">${what}</div></div>`;
+const firstText = o => (o.paragraphs.find(p => p[0] === 'text') || ['', ''])[1];
+const cut = (t, n) => t.length > n ? t.slice(0, n) + '…' : t;
+
+// Zwischenfragen: a card where another person took the floor; one too short to be a point expands in place
+const MARKERS = { zwischenfrage: 'Zwischenfrage', kurzintervention: 'Kurzintervention', antwort: 'Antwort in der Rede' };
+function markerCard(kind, id, s) {
+  const o = byId[id] || DATA.linked[id];
+  if (!o) return '';
+  let what = firstText(o);
+  if (kind === 'antwort') {  // the main speech from where it answers this one
+    const i = o.paragraphs.findIndex(([k, t]) => k in MARKERS && t === s.id);
+    what = (o.paragraphs.slice(i + 1).find(p => p[0] === 'text') || ['', what])[1];
+  }
+  const head = `<div class="kind">${MARKERS[kind]}</div>`;
+  if (byId[id]) return speechCard(o, esc(cut(what, 180)), head).replace('class="similar"', 'class="similar marker"');
+  const full = o.paragraphs.filter(([k]) => !(k in MARKERS)).map(([k, t]) => `<p class="${k}">${esc(t)}</p>`).join('');
+  return `<div class="similar marker" data-aside>${head}<div class="who">${dot(GROUPS.fraction.color(o.fraction))} ${esc(o.speaker)} <span>· ${esc(o.fraction)}</span></div><div class="what">${esc(cut(what, 180))}</div><div class="full">${full}</div></div>`;
+}
+
 function showHint() {
   panelKind = 'hint';
   panel.innerHTML = `<p class="hint">Jeder Punkt ist eine Rede der Sitzungswoche; nahe Punkte handeln von Ähnlichem. Die Beschriftungen sind die Themen, die sich aus den Reden ergeben.</p>
-    <p class="hint">Filter links: innerhalb einer Gruppe „oder“, zwischen Gruppen „und“; nichts angehakt heißt alles. Suchbegriffe markieren Treffer, <kbd>Enter</kbd> macht sie zum Filter.<br>Punkt anklicken: die Rede mit Zwischenrufen, Quelle und ähnlichen Reden. Label anklicken: wer spricht zu diesem Thema. Lasso: Zusammensetzung einer Auswahl. <kbd>Esc</kbd> schließt.</p>`;
+    <p class="hint">Filter links: das Häkchen filtert, ein Klick auf den Namen zeigt die Übersicht. Innerhalb einer Gruppe „oder“, zwischen Gruppen „und“; nichts angehakt heißt alles. Suchbegriffe markieren Treffer, <kbd>Enter</kbd> macht sie zum Filter.<br>Punkt anklicken: die Rede mit Zwischenrufen, Zwischenfragen, Quelle, der nächsten und ähnlichen Reden. Label anklicken: wer spricht zu diesem Thema. <kbd>Esc</kbd> schließt.</p>`;
 }
 function showSpeech(s) {
   panelKind = 'speech';
   state.open = s.id;
   if (s.befragung) state.befragung = true;
-  const paras = s.paragraphs.map(([k, t]) => `<p class="${k}">${k === 'text' ? highlight(t) : esc(t)}</p>`).join('');
-  const similar = s.similar.map(id => byId[id]).map(o => `<div class="similar" onclick="showSpeech(byId['${o.id}']);draw()"><div class="who">${dot(GROUPS.fraction.color(o.fraction))} ${esc(o.speaker)} <span style="color:var(--faint);font-weight:400">· ${esc(o.fraction)}</span></div><div class="what">${esc(o.agenda.slice(0, 80))}</div></div>`).join('');
+  const paras = s.paragraphs.map(([k, t]) => k in MARKERS ? markerCard(k, t, s) : `<p class="${k}">${k === 'text' ? highlight(t) : esc(t)}</p>`).join('');
+  const next = byId[s.next];
   panel.innerHTML = `
     <button class="close" onclick="state.open='';showHint();draw()" title="Schließen (Esc)">×</button>
     <h2>${esc(s.speaker)}</h2>
-    <div class="meta"><b>${esc(s.fraction)}</b>${s.role ? ' · ' + esc(s.role) : ''} · <a href="#" onclick="setSpeaker(${JSON.stringify(s.speaker)});return false">alle Reden</a><br>
+    <div class="meta"><b>${esc(s.fraction)}</b>${s.role ? ' · ' + esc(s.role) : ''} · <a href="#" onclick="setSpeaker(${esc(JSON.stringify(s.speaker))});return false">alle Reden</a><br>
       ${s.weekday} ${fmt(s.date)} · ${esc(s.top)}<br>${dot(AGENDA_COLOR[s.agenda_id])} ${esc(s.agenda)}<br>
       Thema: <a href="#" onclick="setCluster(${s.cluster});return false">${esc(clusterLabel(s.cluster))}</a> · ${s.chars.toLocaleString('de')} Zeichen · ${s.comments} Zwischenrufe/Beifall<br>
       <a href="${s.pdf}" target="_blank" rel="noopener">${esc(s.cite)} (PDF)</a> · Rede ${s.id}${s.drucksachen.length ? ' · Drs. ' + s.drucksachen.join(', ') : ''}</div>
     ${paras}
-    <h3>Ähnliche Reden</h3>${similar}`;
+    ${next ? `<h3>Nächste Rede</h3>${speechCard(next, esc(next.agenda.slice(0, 80)))}` : ''}
+    <h3>Ähnliche Reden</h3>${s.similar.map(id => speechCard(byId[id], esc(byId[id].agenda.slice(0, 80)))).join('')}`;
   panel.scrollTop = 0;
   tourCheck();
 }
@@ -606,19 +653,38 @@ function showCluster(id) {
   const c = clusterById[id], g = S.filter(s => s.cluster === id);
   panel.innerHTML = `<button class="close" onclick="showHint()" title="Schließen">×</button>
     <h2>${esc(c.terms.join(' · '))}</h2>
-    <div class="meta">${g.length} Reden · <a href="#" onclick="setCluster(${id});return false">nur dieses Thema zeigen</a></div>${breakdown(g, false)}`;
+    <div class="meta">${g.length} Reden · <a href="#" onclick="setCluster(${id});return false">nur dieses Thema zeigen</a></div>${breakdown(g, 'cluster')}`;
   panel.scrollTop = 0;
   tourCheck();
 }
-function showGroup(g, title, subtitle) {
+function showGroup(g, title, subtitle, k, v) {
   panelKind = 'group';
-  const list = g.length <= 40 ? `<h3>Reden</h3>${g.map(o => `<div class="similar" onclick="showSpeech(byId['${o.id}']);draw()"><div class="who">${dot(GROUPS.fraction.color(o.fraction))} ${esc(o.speaker)} <span style="color:var(--faint);font-weight:400">· ${esc(o.fraction)} · ${o.weekday}</span></div><div class="what">${esc(o.agenda.slice(0, 70))}<br>${esc(excerpt(o).slice(0, 110))}</div></div>`).join('')}` : '';
+  flags.card = { k, v };
+  const only = k ? ` · <a href="#" data-only="${k}" data-v="${esc(v)}">nur diese zeigen</a>` : '';
+  const list = g.length <= 40 ? `<h3>Reden</h3>${g.map(o => speechCard(o, `${esc(o.agenda.slice(0, 70))}<br>${esc(excerpt(o).slice(0, 110))}`)).join('')}` : '';
   panel.innerHTML = `<button class="close" onclick="showHint()" title="Schließen">×</button>
     <h2>${esc(title)}</h2>
-    <div class="meta">${subtitle ? esc(subtitle) + ' · ' : ''}${g.length} Reden · ${g.reduce((a, s) => a + s.chars, 0).toLocaleString('de')} Zeichen · ${g.reduce((a, s) => a + s.comments, 0)} Zwischenrufe/Beifall</div>${breakdown(g)}${list}`;
+    <div class="meta">${subtitle ? esc(subtitle) + ' · ' : ''}${g.length} Reden · ${g.reduce((a, s) => a + s.chars, 0).toLocaleString('de')} Zeichen · ${g.reduce((a, s) => a + s.comments, 0)} Zwischenrufe/Beifall${only}</div>${breakdown(g, k)}${list}`;
   panel.scrollTop = 0;
   tourCheck();
 }
+// the card of one filter value: from a name in the sidebar or a bar in another card
+function showCard(k, v) {
+  if (k === 'cluster' && v >= 0) return showCluster(v);
+  const g = S.filter(s => GROUPS[k].of(s) === v), a = g[0];
+  if (k === 'agenda') return showGroup(g, a.agenda, `${a.weekday} ${fmt(a.date)} · ${a.top}`, k, v);
+  if (k === 'weekday') return showGroup(g, `${v} ${fmt(a.date)}`, 'Sitzungstag', k, v);
+  showGroup(g, GROUPS[k].name(v), { fraction: 'Fraktion', speaker: 'alle Reden dieser Woche', cluster: 'Reden ohne Thema' }[k], k, v);
+}
+panel.addEventListener('click', e => {
+  const el = e.target.closest('[data-open], [data-aside], [data-card], [data-only]');
+  if (!el) return;
+  e.preventDefault();
+  if (el.dataset.open) { showSpeech(byId[el.dataset.open]); draw(); return; }
+  if ('aside' in el.dataset) { el.classList.toggle('open'); return; }
+  const k = el.dataset.card || el.dataset.only, v = k === 'cluster' ? +el.dataset.v : el.dataset.v;
+  el.dataset.card ? showCard(k, v) : setOnly(k, v);
+});
 if (byId[state.open]) showSpeech(byId[state.open]); else showHint();
 draw();
 if (TOURS[startTourId]) startTour(startTourId);
@@ -649,7 +715,6 @@ map.on('plotly_click', e => {
   if (id === state.open) { state.open = ''; showHint(); } else showSpeech(byId[id]);  // second click on the open speech closes it
   draw();
 });
-map.on('plotly_selected', e => { if (e && e.points.length) showGroup(e.points.map(p => byId[p.customdata]), `${e.points.length} ausgewählte Reden`, 'Lasso-Auswahl'); });
 </script>
 </body>
 </html>
