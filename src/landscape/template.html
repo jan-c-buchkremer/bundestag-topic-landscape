@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Themenlandschaft</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -91,12 +91,12 @@ aside { border-right: 1px solid var(--line); padding: 14px 16px 24px; }
 #tourCard.done { border-color: #3f9a3f; box-shadow: 0 0 0 3px #e3f3e3, 0 10px 30px rgba(0,0,0,.14); }
 #tourCard.done .wait { color: #3f9a3f; }
 #tip.below::after { bottom: auto; top: -6px; transform: translateX(-50%) rotate(-135deg); }
-#tip .who { font-weight: 600; display: flex; align-items: center; gap: 6px; }
-#tip .who span { font-weight: 400; color: var(--muted); }
-#tip .when { color: var(--faint); font-size: 11.5px; margin-bottom: 5px; }
-#tip .top { color: var(--text); margin-bottom: 1px; }
-#tip .topic { color: var(--accent); font-size: 11.5px; margin-bottom: 6px; }
-#tip .excerpt { color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; mask-image: linear-gradient(#000 45%, transparent 100%); -webkit-mask-image: linear-gradient(#000 45%, transparent 100%); }
+.tipbox .who { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.tipbox .who span { font-weight: 400; color: var(--muted); }
+.tipbox .when { color: var(--faint); font-size: 11.5px; margin-bottom: 5px; }
+.tipbox .top { color: var(--text); margin-bottom: 1px; }
+.tipbox .topic { color: var(--accent); font-size: 11.5px; margin-bottom: 6px; }
+.tipbox .excerpt { color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; mask-image: linear-gradient(#000 45%, transparent 100%); -webkit-mask-image: linear-gradient(#000 45%, transparent 100%); }
 #map .cursor-move { cursor: default !important; }  /* Plotly's four-arrow pan cursor */
 
 .sidebar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
@@ -180,7 +180,72 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
 .close { float: right; color: var(--faint); background: none; border: 0; font-size: 18px; line-height: 1; cursor: pointer; margin: -4px -6px 0 0; }
 .close:hover { color: var(--text); }
 
-@media (max-width: 1000px) { #layout { grid-template-columns: 1fr; grid-auto-rows: auto; height: auto; } aside, #panel { border: 0; border-bottom: 1px solid var(--line); } #map { min-height: 70vh; } header .help { display: none; } }
+/* desktop: the sheet is only a wrapper, its children sit in the three grid columns */
+#sheet { display: contents; }
+#sheetHead { display: none; }
+aside { grid-area: 1 / 1; } #map { grid-area: 1 / 2; } #panel { grid-area: 1 / 3; }
+@media (hover: none) {
+  .item:hover, .similar:hover { background: none; } .item:hover .name { color: inherit; } .lbl:hover { transform: translate(-50%, -50%); box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+}
+
+/* phones: map on top, a bottom sheet with the tabs Filter | Details; heights are set in JS (layoutSheet) */
+@media (max-width: 900px), (pointer: coarse) and (max-width: 1100px) {
+  html, body { overflow: hidden; overscroll-behavior: none; }
+  header { height: 48px; padding: 0 12px; gap: 10px; position: relative; z-index: 12; }
+  header .meta, header .help { display: none; }
+  header h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  #weekCal { position: fixed; left: 8px; right: 8px; top: 52px; flex-direction: column; max-height: calc(100dvh - 70px); overflow-y: auto; }
+  #weekCal .wk { width: 32px; height: 32px; line-height: 32px; font-size: 12px; }
+  #weekCal .mo span { width: 34px; }
+  #tourMenu { position: fixed; left: 8px; right: 8px; top: 52px; width: auto; }
+  #tourMenu .t { padding: 12px; }
+  #layout { display: block; height: auto; }
+  #map, #map.tour-target, #map.tour-keep { position: fixed; top: 48px; left: 0; right: 0; height: 50dvh; touch-action: none; }
+  #dayScale { flex-wrap: wrap; justify-content: center; gap: 4px 12px; max-width: calc(100% - 16px); border-radius: 12px; bottom: 8px; }
+  .lbl { padding: 5px 11px 5px 9px; }
+  #sheet { display: flex; flex-direction: column; position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; height: 50dvh;
+    background: var(--card); border-radius: 16px 16px 0 0; box-shadow: 0 -4px 20px rgba(0,0,0,.08), 0 -1px 0 var(--line); transition: height .25s ease; }
+  #sheet.dragging { transition: none; }
+  body.tour-sheet #sheet { z-index: 21; }
+  #sheetHead { display: block; flex: none; touch-action: none; }
+  .grip { height: 22px; display: flex; align-items: center; justify-content: center; }
+  .grip::before { content: ''; width: 38px; height: 4px; border-radius: 2px; background: #d4d4d0; }
+  #peek { margin: 0 12px 8px; padding: 9px 12px 8px; border: 1px solid var(--line); border-radius: 12px; font-size: 13px; line-height: 1.4; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+  #peek[hidden] { display: none; }
+  #peek .who .go { margin-left: auto; color: var(--accent); font-weight: 500; white-space: nowrap; }
+  #peek .excerpt { -webkit-line-clamp: 2; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin: 0 12px 8px; background: var(--bg); border-radius: 10px; padding: 3px; }
+  .tabs button { border: 0; background: transparent; border-radius: 8px; padding: 7px; font-size: 14px; color: var(--muted); }
+  body[data-tab=filter] .tabs [data-tab=filter], body[data-tab=detail] .tabs [data-tab=detail] { background: var(--card); color: var(--text); font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  #filterBadge:not(:empty) { font-size: 11px; font-weight: 500; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 0 6px; margin-left: 4px; }
+  aside, #panel { flex: 1; min-height: 0; border: 0 !important; overscroll-behavior: contain; padding-bottom: calc(24px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line) !important; }
+  aside { padding-top: 10px; }
+  #panel { padding-top: 16px; font-size: 14.5px; }
+  body[data-tab=filter] #panel, body[data-tab=detail] aside { display: none; }
+  .list { max-height: none; }
+  .item { min-height: 40px; font-size: 14px; }
+  .item input { width: 18px; height: 18px; }
+  .item .n { font-size: 12px; }
+  .group .title { padding: 9px 0; font-size: 12px; }
+  .group .title .reload { font-size: 18px; padding: 0 12px; margin: -6px 0; }
+  .segmented button { padding: 9px 2px; font-size: 13px; }
+  .toggle { padding: 9px 0; font-size: 14px; }
+  .toggle input { width: 38px; height: 22px; } .toggle input::after { width: 18px; height: 18px; } .toggle input:checked::after { left: 18px; }
+  select, input[type=text] { font-size: 16px; padding: 8px 10px; }  /* under 16px iOS zooms into the field */
+  .searchrow button { padding: 0 16px; font-size: 18px; }
+  .similar { padding: 10px 12px; }
+  #panel table.dist td { padding: 7px 0; }
+  #panel details summary { padding: 8px 0; font-size: 13px; }
+  .close { font-size: 26px; padding: 4px 10px; margin: -10px -14px 0 0; }
+  #tourCard { width: auto; right: 8px; }
+  /* landscape phones: the sheet is a fixed right-hand column, no dragging */
+  @media (orientation: landscape) and (max-height: 500px) {
+    #map, #map.tour-target, #map.tour-keep { right: 42%; height: auto !important; bottom: 0; }
+    #sheet { top: 48px; left: auto; width: 42%; height: auto !important; border-radius: 0; box-shadow: -1px 0 0 var(--line); }
+    .grip { display: none; }
+    #sheetHead { padding-top: 8px; }
+  }
+}
 </style>
 </head>
 <body>
@@ -195,6 +260,9 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
 </header>
 <div id="tourDim"></div><div id="tourCard"></div>
 <div id="layout">
+  <div id="sheet">
+  <div id="sheetHead"><div class="grip" title="Größe ändern"></div><div id="peek" class="tipbox" hidden></div>
+    <div class="tabs"><button data-tab="filter">Filter <span id="filterBadge"></span></button><button data-tab="detail">Details</button></div></div>
   <aside>
     <div class="sidebar-head"><b>Filter</b><span><span id="count"></span> · <button class="linkbtn" id="reset">zurücksetzen</button></span></div>
     <div class="group" id="g-search"><div class="title">Suche<span class="arrow"></span></div><div class="content">
@@ -215,13 +283,16 @@ select:focus, input:focus { outline: 2px solid var(--accent-soft); border-color:
       <label class="toggle">Themen-Labels <input type="checkbox" id="showLabels"></label>
     </div></div>
   </aside>
-  <div id="map"><div id="labels"></div><div id="tip"></div><div id="dayScale"></div></div>
   <div id="panel"></div>
+  </div>
+  <div id="map"><div id="labels"></div><div id="tip" class="tipbox"></div><div id="dayScale"></div></div>
 </div>
 <script>
 const DATA = __DATA__;
 const S = DATA.speeches;
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const mq = matchMedia('(max-width: 900px), (pointer: coarse) and (max-width: 1100px)');  // the phone layout, as in the CSS
+let mobile = mq.matches;
 const FRACTION_COLORS = { 'CDU/CSU': css('--cdu'), 'SPD': css('--spd'), 'AfD': css('--afd'), 'BÜNDNIS 90/DIE GRÜNEN': css('--gru'), 'Die Linke': css('--lin'), 'fraktionslos': css('--frl'), 'ohne Fraktion': css('--reg') };
 const ROLE_COLORS = ['#2a78d6', '#eb6834'];  // Abgeordnete, Regierung
 const NOISE = '#d4d4d0';
@@ -303,7 +374,7 @@ const GROUPS = {
   speaker: { of: s => s.speaker, name: v => v, color: v => FRACTION_COLORS[S.find(s => s.speaker === v).fraction] || NOISE, order: null },
 };
 document.getElementById('dayScale').innerHTML = dates.map(d => `<span><i style="background:${dayGradient(weekdayOf(d))}"></i>${GROUPS.weekday.name(weekdayOf(d))}</span>`).join('') + '<span class="hint">früh → spät</span>';
-const DEFAULTS = { mode: 'cluster', terms: [], live: '', dim: true, befragung: false, size: true, showLabels: true, open: '' };
+const DEFAULTS = { mode: 'cluster', terms: [], live: '', dim: true, befragung: false, size: true, showLabels: true, open: '', peek: '' };
 const TOGGLES = ['dim', 'befragung', 'size', 'showLabels'];
 const state = { ...DEFAULTS, checked: Object.fromEntries(Object.keys(GROUPS).map(k => [k, new Set()])) };
 const totals = Object.fromEntries(Object.keys(GROUPS).map(k => [k, Map.groupBy(S, GROUPS[k].of)]));
@@ -321,7 +392,7 @@ const encodeState = () => {
   if (state.terms.length) h.set('suche', state.terms.filter(t => t.on).map(t => t.term).join('|'));
   for (const k of TOGGLES) if (state[k] !== DEFAULTS[k]) h.set(k, state[k] ? '1' : '0');
   if (state.open) h.set('rede', state.open);
-  history.replaceState(null, '', h.size ? '#' + h : location.pathname);
+  history.replaceState(history.state, '', h.size ? '#' + h : location.pathname);  // keeps the sheet's back-button entries
 };
 let startTourId = '';
 const decodeState = () => {
@@ -347,9 +418,10 @@ function renderList(k) {
   listEls[k].querySelectorAll('.item').forEach(it => {
     const k = it.dataset.key, v = listOrder[k][+it.dataset.i], input = it.querySelector('input');
     input.onchange = () => { input.checked ? state.checked[k].add(v) : state.checked[k].delete(v); draw(); };
-    it.onclick = e => { if (e.target !== input) showCard(k, v); };
+    it.onclick = e => { if (e.target === input) return; if (nearBox(e, it)) input.click(); else showCard(k, v); };
   });
 }
+const nearBox = (e, it) => mobile && e.clientX - it.getBoundingClientRect().left < 40;
 Object.keys(listEls).forEach(renderList);
 function renderSearchList() {
   const el = document.getElementById('searchList');
@@ -359,7 +431,7 @@ function renderSearchList() {
     const i = +it.dataset.i, input = it.querySelector('input');
     input.onchange = () => { state.terms[i].on = input.checked; draw(); };
     it.querySelector('.x').onclick = () => { state.terms.splice(i, 1); renderSearchList(); draw(); };
-    it.onclick = e => { if (e.target !== input && !e.target.classList.contains('x')) { const term = state.terms[i].term; showGroup(S.filter(s => s.haystack.includes(term.toLowerCase())), `„${term}“`, 'Suchbegriff'); } };
+    it.onclick = e => { if (e.target !== input && nearBox(e, it)) return input.click(); if (e.target !== input && !e.target.classList.contains('x')) { const term = state.terms[i].term; showGroup(S.filter(s => s.haystack.includes(term.toLowerCase())), `„${term}“`, 'Suchbegriff'); } };
   });
 }
 renderSearchList();
@@ -387,10 +459,10 @@ let view = 0;  // Plotly keeps zoom/pan while uirevision stays the same; a new v
 document.getElementById('reset').onclick = () => {
   for (const k in GROUPS) { state.checked[k].clear(); listOrder[k] = initialOrder(k); }
   Object.assign(state, DEFAULTS, { terms: [] });
-  flags.reloaded = {}; clearTimeout(typing); searchInput.value = ''; view++;
-  Object.keys(listEls).forEach(renderList); renderSearchList(); showHint(); draw();
+  flags.reloaded = {}; clearTimeout(typing); searchInput.value = ''; view++; mapRange = null;
+  Object.keys(listEls).forEach(renderList); renderSearchList(); if (state.open) closeSpeech(); showHint(); renderPeek(); draw();
 };
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.activeElement !== searchInput) { state.open = ''; showHint(); draw(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.activeElement !== searchInput && state.open) closeSpeech(); });
 const setOnly = (k, v) => { state.checked[k] = new Set([v]); renderList(k); draw(); };  // filter to one value
 const setSpeaker = name => { setOnly('speaker', name); showCard('speaker', name); };
 const setCluster = id => { setOnly('cluster', id); if (id >= 0) showCluster(id); };
@@ -404,6 +476,8 @@ function syncControls() {
     if (!n) continue;
     if (badge) badge.textContent = +badge.textContent + n; else title.querySelector('.arrow').insertAdjacentHTML('beforebegin', `<span class="badge">${n}</span>`);
   }
+  const active = Object.values(state.checked).reduce((a, c) => a + c.size, 0) + state.terms.filter(x => x.on).length;
+  document.getElementById('filterBadge').textContent = active || '';
 }
 
 // empty group = no filter; OR within a group, AND across groups; every active search term has to match
@@ -419,11 +493,13 @@ const colorOf = { cluster: GROUPS.cluster.color, fraction: GROUPS.fraction.color
 const nameOf = { cluster: clusterLabel, fraction: k => k, weekday: k => k, agenda: k => GROUPS.agenda.name(k).slice(0, 40), mdb: k => k };
 const order = { cluster: GROUPS.cluster.order, fraction: GROUPS.fraction.order, weekday: GROUPS.weekday.order, agenda: GROUPS.agenda.order, mdb: (a, b) => a < b ? -1 : 1 };
 const FONT = 'Inter, system-ui, sans-serif';
+let lastShown = S, mapRange = null;  // mapRange: the zoomed view, passed to every redraw; a programmatic (touch) relayout is not kept by uirevision
 
 function draw() {
   syncControls(); encodeState();
   const mode = state.mode, sizeBy = state.size;
   const shown = S.filter(matches), shownIds = new Set(shown.map(s => s.id));
+  lastShown = shown;
   document.getElementById('count').textContent = `${shown.length} von ${S.length}`;
   for (const k in GROUPS) {
     const counts = Map.groupBy(shown, GROUPS[k].of);
@@ -447,6 +523,9 @@ function draw() {
   const open = byId[state.open];
   if (open) traces.push({ type: 'scattergl', mode: 'markers', name: 'geöffnet', showlegend: false, hoverinfo: 'skip',
     x: [open.x], y: [open.y], customdata: [open.id], marker: { color: 'rgba(0,0,0,0)', size: size(open) + 10, line: { width: 2, color: '#1f2328' } } });
+  const peek = byId[state.peek];
+  if (peek) traces.push({ type: 'scattergl', mode: 'markers', name: 'Vorschau', showlegend: false, hoverinfo: 'skip',
+    x: [peek.x], y: [peek.y], customdata: [peek.id], marker: { color: 'rgba(0,0,0,0)', size: size(peek) + 12, line: { width: 3, color: css('--accent') } } });
   labelAnchors = DATA.clusters.map(c => {
     const g = shown.filter(s => s.cluster === c.id);
     return g.length < 3 ? null : { id: c.id, n: g.length, x: median(g.map(s => s.x)), y: median(g.map(s => s.y)) };
@@ -455,7 +534,7 @@ function draw() {
     paper_bgcolor: css('--bg'), plot_bgcolor: css('--bg'), font: { color: css('--muted'), family: FONT, size: 12 },
     margin: { l: 16, r: 16, t: 16, b: 16 }, hovermode: 'closest',
     dragmode: 'pan',
-    xaxis: { visible: false }, yaxis: { visible: false, scaleanchor: 'x' },
+    xaxis: { visible: false, ...mapRange && { range: mapRange.x } }, yaxis: { visible: false, scaleanchor: 'x', ...mapRange && { range: mapRange.y } },
     showlegend: mode === 'fraction' || mode === 'mdb', legend: { orientation: 'h', y: 0, x: 0.5, xanchor: 'center', yanchor: 'bottom', bgcolor: 'rgba(255,255,255,.7)' },
     uirevision: view,
   }, { responsive: true, scrollZoom: true, displayModeBar: false, doubleClick: 'reset' }).then(placeLabels);
@@ -486,7 +565,7 @@ function placeLabels() {
     let y = items[i].y, ok = false;
     for (const dy of [0, -1, 1, -2, 2, -3, 3]) {
       const yy = items[i].y + dy * h;
-      if (!placed.some(r => Math.abs(r.x - x) < (r.w + w) / 2 && Math.abs(r.y - yy) < (r.h + h) / 2)) { y = yy; ok = true; break; }
+      if (yy > h / 2 && yy < H - h / 2 && !placed.some(r => Math.abs(r.x - x) < (r.w + w) / 2 && Math.abs(r.y - yy) < (r.h + h) / 2)) { y = yy; ok = true; break; }
     }
     if (!ok) { el.remove(); return; }
     el.style.top = y + 'px'; placed.push({ x, y, w, h });
@@ -509,13 +588,16 @@ const expand = id => document.getElementById(id).classList.remove('collapsed');
 const listRow = (k, v) => document.querySelector(`.item[data-key=${k}][data-i="${listOrder[k].indexOf(v)}"]`);
 const TOURS = {
   woche: { title: 'Was war diese Woche los?', blurb: 'Karte lesen, ein Thema öffnen, eine Rede bis zur Quelle verfolgen.', steps: [
-    { target: '#map', title: 'Die Landschaft', text: 'Jeder Punkt ist eine Rede dieser Sitzungswoche. Nahe Punkte handeln von Ähnlichem; die Labels sind die Themen, die sich aus den Reden ergeben.' },
-    { target: '#map', title: 'Punkte erkunden', text: '<b>Fahre mit der Maus über einen Punkt.</b> Die Karte zeigt, wer wann wozu gesprochen hat, und den Anfang der Rede.', done: () => flags.hovered },
+    { target: '#map', title: 'Die Landschaft', text: 'Jeder Punkt ist eine Rede dieser Sitzungswoche. Nahe Punkte handeln von Ähnlichem; die Labels sind die Themen, die sich aus den Reden ergeben.',
+      mText: 'Jeder Punkt ist eine Rede dieser Sitzungswoche. Nahe Punkte handeln von Ähnlichem; die Labels sind die Themen. Ein Finger verschiebt die Karte, zwei Finger zoomen.' },
+    { target: '#map', title: 'Punkte erkunden', text: '<b>Fahre mit der Maus über einen Punkt.</b> Die Karte zeigt, wer wann wozu gesprochen hat, und den Anfang der Rede.', done: () => flags.hovered,
+      mText: '<b>Tippe einen Punkt an.</b> Unten erscheint eine Vorschau: wer wann wozu gesprochen hat, und der Anfang der Rede.' },
     { target: () => document.querySelector(`.lbl[data-c="${pick.cluster}"]`) || document.getElementById('map'), title: 'Das größte Thema', text: '<b>Klicke das Label „{cluster}“</b> – das größte Thema der Woche.', done: () => panelKind === 'cluster' },
     { target: '#panel', title: 'Wer besetzt das Thema', text: 'Die Balken zeigen, welche Fraktion wie oft zu diesem Thema gesprochen hat, darunter die Tagesordnungspunkte und die Redner:innen (anklickbar).' },
-    { target: '#map', title: 'Eine Rede öffnen', text: '<b>Klicke einen Punkt.</b>', done: () => state.open !== '' },
-    { target: '#panel', title: 'Die Rede', text: 'Der volle Text mit Zwischenrufen, Beifall und Zwischenfragen an ihrer Stelle. Der Link führt zum Plenarprotokoll als PDF, ganz unten stehen die nächste Rede und die fünf ähnlichsten Reden der Woche.' },
-    { target: '#map', title: 'Schließen', text: '<b>Klicke den Punkt noch einmal</b> oder drücke <b>Esc</b>.', done: () => state.open === '' },
+    { target: '#map', title: 'Eine Rede öffnen', text: '<b>Klicke einen Punkt.</b>', done: () => state.open !== '', mText: '<b>Tippe einen Punkt zweimal an</b> oder tippe auf die Vorschau.' },
+    { target: '#panel', title: 'Die Rede', text: 'Der volle Text mit Zwischenrufen, Beifall und Zwischenfragen an ihrer Stelle. Der Link führt zum Plenarprotokoll als PDF, ganz unten stehen die nächste Rede und die fünf ähnlichsten Reden der Woche.',
+      mText: 'Der volle Text mit Zwischenrufen, Beifall und Zwischenfragen an ihrer Stelle. <b>Zieh das Blatt am Griff nach oben</b>, um die Rede bildschirmfüllend zu lesen. Ganz unten stehen die nächste Rede und die fünf ähnlichsten Reden der Woche.' },
+    { target: '#map', title: 'Schließen', text: '<b>Klicke den Punkt noch einmal</b> oder drücke <b>Esc</b>.', done: () => state.open === '', mText: '<b>Tippe den Punkt noch einmal an</b> oder oben in der Rede auf <b>×</b>.' },
   ] },
   debatte: { title: 'Eine Debatte über die Landschaft verfolgen', blurb: 'Ein Tagesordnungspunkt ist kein Thema: sehen, wohin er sich verteilt und wer wo spricht.', steps: [
     { intro: true, title: 'Debatte ≠ Thema', text: 'Ein Tagesordnungspunkt ist eine Debatte. Die Karte ordnet Reden nach Inhalt – eine Debatte verteilt sich deshalb oft über mehrere Themen. In dieser Tour färbst du die Karte nach Debatten und siehst, wer wo spricht.' },
@@ -538,10 +620,11 @@ const TOURS = {
 };
 const tour = { id: '', step: 0 };
 const card = document.getElementById('tourCard'), tourMenu = document.getElementById('tourMenu');
-const fill = t => t.replace('{cluster}', esc(pick.clusterLabel)).replace('{agenda}', esc(pick.agendaTitle.slice(0, 60))).replace('{agendaClusters}', pick.agendaClusters).replace('{speaker}', esc(pick.speaker));
-const spot = el => { document.querySelectorAll('.tour-target').forEach(x => x.classList.remove('tour-target')); if (el) el.classList.add('tour-target'); };
+const touchWords = t => t.replace(/\bKlicke\b/g, 'Tippe').replace(/\bklicke\b/g, 'tippe').replace('anklickbar', 'antippbar');
+const fill = t => (mobile ? touchWords(t) : t).replace('{cluster}', esc(pick.clusterLabel)).replace('{agenda}', esc(pick.agendaTitle.slice(0, 60))).replace('{agendaClusters}', pick.agendaClusters).replace('{speaker}', esc(pick.speaker));
+const spot = el => { document.querySelectorAll('.tour-target').forEach(x => x.classList.remove('tour-target')); if (el) el.classList.add('tour-target'); document.body.classList.toggle('tour-sheet', !!el && sheet.contains(el)); };
 function startTour(id) { tour.id = id; tour.step = 0; tourMenu.classList.remove('open'); document.getElementById('tourDim').classList.add('show'); showStep(); }
-function endTour() { tour.id = ''; spot(null); map.classList.remove('tour-keep'); card.classList.remove('show', 'done'); document.getElementById('tourDim').classList.remove('show'); }
+function endTour() { tour.id = ''; spot(null); document.body.classList.remove('tour-sheet'); map.classList.remove('tour-keep'); card.classList.remove('show', 'done'); document.getElementById('tourDim').classList.remove('show'); }
 function showStep() {
   const steps = TOURS[tour.id].steps;
   if (tour.step >= steps.length) {  // closing card
@@ -553,18 +636,30 @@ function showStep() {
   }
   const st = steps[tour.step];
   st.prepare?.();
-  const el = st.intro ? null : typeof st.target === 'function' ? st.target() : document.querySelector(st.target);
+  let el = st.intro ? null : typeof st.target === 'function' ? st.target() : document.querySelector(st.target);
+  if (mobile && el) {  // bring the target's tab up; a sidebar target without the map in play gets the whole screen
+    const inAside = el.closest('aside');
+    if (inAside || el.closest('#panel')) setSheet({ tab: inAside ? 'filter' : 'detail', snap: inAside && !st.keepMap ? 'full' : 'half' });
+    else if (sheetSnap === 'full') setSheet({ snap: 'half' });
+    if (inAside) el.scrollIntoView({ block: 'center' });
+    if (!el.getClientRects().length) el = null;  // hidden on phones (the header meta)
+  }
   spot(el);
   document.getElementById('tourDim').classList.toggle('show', !st.intro);
   map.classList.toggle('tour-keep', !!st.keepMap && el !== map);
   card.className = 'show';
   card.innerHTML = `<div class="bar"><i style="width:${100 * tour.step / steps.length}%;display:block;height:100%"></i></div>
-    <div class="step">Schritt ${tour.step + 1} von ${steps.length}</div><h4>${fill(st.title)}</h4><p>${fill(st.text)}</p>
+    <div class="step">Schritt ${tour.step + 1} von ${steps.length}</div><h4>${fill(st.title)}</h4><p>${fill(mobile && st.mText || st.text)}</p>
     <div class="row"><a href="#" class="linkbtn" onclick="tour.step++;showStep();return false">Überspringen</a><a href="#" class="linkbtn" onclick="endTour();return false">Beenden</a><span class="spacer"></span>
     ${st.done ? '<span class="wait">Warte auf dich …</span>' : '<button class="next" onclick="tour.step++;showStep()">Weiter</button>'}</div>`;
   place(el);
 }
 function place(el) {
+  if (mobile) {  // full width; above the sheet for the map, else on the side of the screen away from the target
+    const ch = card.offsetHeight || 160, head = document.querySelector('header').offsetHeight, r = el && el.getBoundingClientRect();
+    const top = !el ? head + 8 : el === map && side.matches ? innerHeight - ch - 8 : el === map ? sheet.getBoundingClientRect().top - ch - 8 : r.top + r.height / 2 < innerHeight / 2 ? innerHeight - ch - 8 : head + 8;
+    card.style.left = '8px'; card.style.top = Math.max(top, 8) + 'px'; return;
+  }
   const r = (el || document.getElementById('map')).getBoundingClientRect(), W = innerWidth, H = innerHeight, cw = 320, ch = card.offsetHeight || 160;
   let x, y;
   if (r.width < W / 2) { x = r.right + 14 < W - cw ? r.right + 14 : r.left - cw - 14; y = r.top; }  // beside a sidebar / panel element
@@ -625,18 +720,25 @@ function markerCard(kind, id, s) {
 }
 
 function showHint() {
-  panelKind = 'hint';
-  panel.innerHTML = `<p class="hint">Jeder Punkt ist eine Rede der Sitzungswoche; nahe Punkte handeln von Ähnlichem. Die Beschriftungen sind die Themen, die sich aus den Reden ergeben.</p>
+  panelKind = 'hint'; lastCard = showHint;
+  panel.innerHTML = mobile ? `<p class="hint">Jeder Punkt ist eine Rede der Sitzungswoche; nahe Punkte handeln von Ähnlichem. Die Beschriftungen sind die Themen, die sich aus den Reden ergeben.</p>
+    <p class="hint">Einen Punkt antippen zeigt eine Vorschau, ein zweites Tippen öffnet die Rede. Am Griff lässt sich das Blatt hoch- und herunterziehen. Ein Finger verschiebt die Karte, zwei Finger zoomen, doppelt auf eine leere Stelle tippen setzt zurück. Ein Label antippen: wer spricht zu diesem Thema.</p>
+    <p class="hint">Unter „Filter“: der linke Rand einer Zeile setzt das Häkchen, der Name zeigt die Übersicht. Innerhalb einer Gruppe „oder“, zwischen Gruppen „und“; nichts angehakt heißt alles.</p>` : `<p class="hint">Jeder Punkt ist eine Rede der Sitzungswoche; nahe Punkte handeln von Ähnlichem. Die Beschriftungen sind die Themen, die sich aus den Reden ergeben.</p>
     <p class="hint">Filter links: das Häkchen filtert, ein Klick auf den Namen zeigt die Übersicht. Innerhalb einer Gruppe „oder“, zwischen Gruppen „und“; nichts angehakt heißt alles. Suchbegriffe markieren Treffer, <kbd>Enter</kbd> macht sie zum Filter.<br>Punkt anklicken: die Rede mit Zwischenrufen, Zwischenfragen, Quelle, der nächsten und ähnlichen Reden. Label anklicken: wer spricht zu diesem Thema. <kbd>Esc</kbd> schließt.</p>`;
 }
 function showSpeech(s) {
   panelKind = 'speech';
   state.open = s.id;
   if (s.befragung) state.befragung = true;
+  if (mobile) {  // the speech takes the sheet's Details tab; the back button closes it again
+    state.peek = ''; renderPeek();
+    if (!levels.includes('speech')) pushLevel('speech');
+    setSheet({ tab: 'detail', snap: sheetSnap === 'full' ? 'full' : 'half' }).then(() => reveal(s));
+  }
   const paras = s.paragraphs.map(([k, t]) => k in MARKERS ? markerCard(k, t, s) : `<p class="${k}">${k === 'text' ? highlight(t) : esc(t)}</p>`).join('');
   const next = byId[s.next];
   panel.innerHTML = `
-    <button class="close" onclick="state.open='';showHint();draw()" title="Schließen (Esc)">×</button>
+    <button class="close" onclick="closeSpeech()" title="Schließen (Esc)">×</button>
     <h2>${esc(s.speaker)}</h2>
     <div class="meta"><b>${esc(s.fraction)}</b>${s.role ? ' · ' + esc(s.role) : ''} · <a href="#" onclick="setSpeaker(${esc(JSON.stringify(s.speaker))});return false">alle Reden</a><br>
       ${s.weekday} ${fmt(s.date)} · ${esc(s.top)}<br>${dot(AGENDA_COLOR[s.agenda_id])} ${esc(s.agenda)}<br>
@@ -648,8 +750,18 @@ function showSpeech(s) {
   panel.scrollTop = 0;
   tourCheck();
 }
+// closing a speech on a phone goes back to the card it was opened from
+let lastCard = showHint;
+function closeSpeech() { popLevel('speech'); closeSpeechNow(); }
+function closeSpeechNow() {
+  state.open = '';
+  if (!mobile) showHint();
+  else { lastCard(); setSheet({ tab: lastCard === showHint ? 'filter' : 'detail', snap: sheetSnap === 'full' ? 'half' : sheetSnap }); }
+  draw();
+}
+const toDetail = () => mobile && setSheet({ tab: 'detail', snap: sheetSnap === 'peek' ? 'half' : sheetSnap });
 function showCluster(id) {
-  panelKind = 'cluster';
+  panelKind = 'cluster'; lastCard = () => showCluster(id); toDetail();
   const c = clusterById[id], g = S.filter(s => s.cluster === id);
   panel.innerHTML = `<button class="close" onclick="showHint()" title="Schließen">×</button>
     <h2>${esc(c.terms.join(' · '))}</h2>
@@ -658,7 +770,7 @@ function showCluster(id) {
   tourCheck();
 }
 function showGroup(g, title, subtitle, k, v) {
-  panelKind = 'group';
+  panelKind = 'group'; lastCard = () => showGroup(g, title, subtitle, k, v); toDetail();
   flags.card = { k, v };
   const only = k ? ` · <a href="#" data-only="${k}" data-v="${esc(v)}">nur diese zeigen</a>` : '';
   const list = g.length <= 40 ? `<h3>Reden</h3>${g.map(o => speechCard(o, `${esc(o.agenda.slice(0, 70))}<br>${esc(excerpt(o).slice(0, 110))}`)).join('')}` : '';
@@ -685,22 +797,217 @@ panel.addEventListener('click', e => {
   const k = el.dataset.card || el.dataset.only, v = k === 'cluster' ? +el.dataset.v : el.dataset.v;
   el.dataset.card ? showCard(k, v) : setOnly(k, v);
 });
+// --- phones: bottom sheet with peek / half / full heights, back button steps back ---------
+const sheet = document.getElementById('sheet'), sheetHead = document.getElementById('sheetHead'), peekEl = document.getElementById('peek');
+const side = matchMedia('(orientation: landscape) and (max-height: 500px)');  // the sheet is a fixed right-hand column
+let sheetSnap = 'half', sheetTab = 'filter', mapSize = '';
+const sheetHeights = () => {
+  const H = innerHeight - document.querySelector('header').offsetHeight, peek = sheetHead.offsetHeight;
+  return { H, peek, half: Math.max(Math.round(H * .5), peek), full: H };
+};
+function layoutSheet() {
+  document.body.dataset.tab = sheetTab; sheet.dataset.snap = sheetSnap;
+  if (!mobile || side.matches) sheet.style.height = map.style.height = '';
+  else {  // at full the sheet covers the map, which keeps its half-screen size
+    const h = sheetHeights();
+    sheet.style.height = h[sheetSnap] + 'px';
+    map.style.height = Math.max(h.H - (sheetSnap === 'full' ? h.half : h[sheetSnap]), 0) + 'px';
+  }
+  return resizeMap();
+}
+function resizeMap() {
+  const size = `${map.clientWidth}x${map.clientHeight}`;
+  if (!map._fullLayout || size === mapSize) return Promise.resolve();
+  mapSize = size;
+  return Plotly.Plots.resize(map).then(() => { if (mapRange) mapRange = ranges(); placeLabels(); });
+}
+const levels = [];  // history entries pushed for 'speech' and 'full', so the back button closes them
+let skipPop = 0;
+const pushLevel = k => { levels.push(k); history.pushState({ sheet: levels.length }, '', location.href); };
+const popLevel = k => {  // closed from the page: drop its entry (and any above it) without acting on the popstate
+  const i = levels.lastIndexOf(k);
+  if (i < 0) return;
+  const n = levels.length - i;
+  levels.length = i; skipPop++; history.go(-n);
+};
+addEventListener('popstate', () => {
+  if (skipPop) skipPop--;
+  else {
+    const k = levels.pop();
+    if (k === 'speech' && state.open) closeSpeechNow();
+    else if (k === 'full' && sheetSnap === 'full') { sheetSnap = 'half'; layoutSheet(); }
+  }
+  encodeState();  // going back restored an older URL
+});
+function setSheet({ tab, snap } = {}) {
+  if (!mobile) return Promise.resolve();
+  const was = sheetSnap;
+  if (tab) sheetTab = tab;
+  if (snap) sheetSnap = snap;
+  if (sheetSnap === 'full' && was !== 'full') pushLevel('full');
+  if (was === 'full' && sheetSnap !== 'full') popLevel('full');
+  const done = layoutSheet();
+  if (tour.id) setTimeout(() => {  // after the height transition
+    const el = document.querySelector('.tour-target');
+    if (el?.closest('aside')) el.scrollIntoView({ block: 'center' });
+    place(el);
+  }, 280);
+  return done;
+}
+function renderPeek() {
+  const s = byId[state.peek];
+  peekEl.hidden = !s;
+  peekEl.innerHTML = s ? tipHtml(s, '<span class="go">Öffnen ›</span>') : '';
+  if (mobile) layoutSheet();  // the head got taller or shorter
+}
+peekEl.onclick = () => { const s = byId[state.peek]; if (s) { showSpeech(s); draw(); } };
+sheetHead.querySelectorAll('.tabs button').forEach(b => b.onclick = () => setSheet({ tab: b.dataset.tab, snap: sheetSnap === 'peek' ? 'half' : undefined }));
+sheetHead.querySelector('.grip').onclick = () => setSheet({ snap: sheetSnap === 'half' ? 'full' : 'half' });
+searchInput.addEventListener('focus', () => setSheet({ snap: 'full' }));  // keeps the field above the keyboard
+// dragging: the head always, the content only downwards from its top (as in native sheets); a fling jumps one snap
+let drag = null, dragEnd = 0;
+sheet.addEventListener('touchstart', e => {
+  if (!mobile || side.matches || e.touches.length > 1) return;
+  const head = sheetHead.contains(e.target), content = e.target.closest('aside, #panel');
+  if (head || (content && content.scrollTop <= 0)) drag = { y0: e.touches[0].clientY, h0: sheet.offsetHeight, head, on: false, trail: [] };
+}, { passive: true });
+sheet.addEventListener('touchmove', e => {
+  if (!drag) return;
+  const y = e.touches[0].clientY, dy = y - drag.y0;
+  if (!drag.on) {
+    if (Math.abs(dy) < 8) return;
+    if (!drag.head && dy < 0) { drag = null; return; }  // scrolling the content
+    drag.on = true; sheet.classList.add('dragging');
+  }
+  e.preventDefault();
+  const h = sheetHeights();
+  sheet.style.height = Math.min(Math.max(drag.h0 - dy, h.peek), h.full) + 'px';
+  drag.trail = [...drag.trail.slice(-4), [e.timeStamp, y]];
+}, { passive: false });
+const endDrag = () => {
+  const d = drag; drag = null;
+  if (!d || !d.on) return;
+  sheet.classList.remove('dragging'); dragEnd = Date.now();
+  const h = sheetHeights(), cur = sheet.offsetHeight, order = ['peek', 'half', 'full'], [a, b] = [d.trail[0], d.trail.at(-1)];
+  const v = a && b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) : 0;  // px/ms, positive = down
+  const nearest = order.reduce((m, k) => Math.abs(h[k] - cur) < Math.abs(h[m] - cur) ? k : m);
+  const snap = v < -.4 ? order.find(k => h[k] > cur + 4) || 'full' : v > .4 ? order.findLast(k => h[k] < cur - 4) || 'peek' : nearest;
+  setSheet({ snap });
+};
+sheet.addEventListener('touchend', endDrag);
+sheet.addEventListener('touchcancel', endDrag);
+sheet.addEventListener('click', e => { if (Date.now() - dragEnd < 400) { e.stopPropagation(); e.preventDefault(); } }, true);  // no tab switch after a drag
+
+// --- phones: own pan / pinch / tap on the map; Plotly keeps the mouse ---------------------
+// Plotly's cartesian plots have no pinch zoom, so touches are caught before they reach it
+const ranges = () => ({ x: [...map._fullLayout.xaxis.range], y: [...map._fullLayout.yaxis.range] });
+const applyRange = r => { mapRange = r; return Plotly.relayout(map, { 'xaxis.range': r.x, 'yaxis.range': r.y }); };
+const resetZoom = () => { mapRange = null; Plotly.relayout(map, { 'xaxis.autorange': true, 'yaxis.autorange': true }); };
+const gest = { start: null, frame: 0, next: null, tap: null, lastTap: null };
+const centre = ts => ({ x: [...ts].reduce((a, t) => a + t.clientX, 0) / ts.length, y: [...ts].reduce((a, t) => a + t.clientY, 0) / ts.length });
+const spread = ts => ts.length < 2 ? 0 : Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
+function gestureStart(ts) {
+  const fl = map._fullLayout, r = map.getBoundingClientRect();
+  gest.start = { r: ranges(), c: centre(ts), d: spread(ts), l: r.left + fl._size.l, t: r.top + fl._size.t, w: fl._size.w, h: fl._size.h };
+}
+function gestureMove(ts) {  // the data point under the start centre stays under the fingers, scaled by the pinch
+  const s = gest.start, c = centre(ts), wx = s.r.x[1] - s.r.x[0], wy = s.r.y[1] - s.r.y[0];
+  let k = s.d && ts.length > 1 ? s.d / Math.max(spread(ts), 1) : 1;
+  k = Math.min(Math.max(k, SPAN / 60 / wx), SPAN * 2 / wx);
+  const X = s.r.x[0] + (s.c.x - s.l) / s.w * wx, Y = s.r.y[1] - (s.c.y - s.t) / s.h * wy;
+  const x0 = X - (c.x - s.l) / s.w * wx * k, y1 = Y + (c.y - s.t) / s.h * wy * k;
+  gest.next = { x: [x0, x0 + wx * k], y: [y1 - wy * k, y1] };
+  gest.frame ||= requestAnimationFrame(() => { gest.frame = 0; applyRange(gest.next); });
+}
+function speechAt(cx, cy) {  // nearest shown speech within a finger's reach, else a dimmed one
+  const fl = map._fullLayout, r = map.getBoundingClientRect(), px = cx - r.left - fl._size.l, py = cy - r.top - fl._size.t;
+  const near = list => {
+    let best = null, bd = 26 ** 2;
+    for (const s of list) { const d = (fl.xaxis.l2p(s.x) - px) ** 2 + (fl.yaxis.l2p(s.y) - py) ** 2; if (d < bd) { bd = d; best = s; } }
+    return best;
+  };
+  return near(lastShown) || (state.dim ? near(S) : null);
+}
+function tapAt({ x, y, target }) {
+  const lbl = target.closest?.('.lbl');
+  if (lbl) return showCluster(+lbl.dataset.c);
+  const s = speechAt(x, y);
+  if (s) {  // first tap previews, a second tap opens, a tap on the open speech closes it
+    gest.lastTap = null;
+    if (s.id === state.open) return closeSpeech();
+    if (s.id === state.peek) { showSpeech(s); return draw(); }
+    state.peek = s.id; flags.hovered = true; renderPeek(); return draw();
+  }
+  const last = gest.lastTap;
+  gest.lastTap = { x, y, t: Date.now() };
+  if (last && gest.lastTap.t - last.t < 350 && Math.hypot(x - last.x, y - last.y) < 30) { gest.lastTap = null; return resetZoom(); }
+  if (state.peek) { state.peek = ''; renderPeek(); draw(); }
+}
+function reveal(s) {  // pan (not zoom) so the opened speech is on screen
+  const fl = map._fullLayout;
+  if (!fl) return;
+  const px = fl.xaxis.l2p(s.x), py = fl.yaxis.l2p(s.y), m = 24;
+  if (px > m && px < fl._size.w - m && py > m && py < fl._size.h - m) return;
+  const r = ranges(), dx = s.x - (r.x[0] + r.x[1]) / 2, dy = s.y - (r.y[0] + r.y[1]) / 2;
+  applyRange({ x: r.x.map(v => v + dx), y: r.y.map(v => v + dy) });
+}
+const own = e => { e.stopPropagation(); if (e.cancelable) e.preventDefault(); };
+map.addEventListener('touchstart', e => {
+  own(e);
+  weekCal.classList.remove('open'); tourMenu.classList.remove('open');  // no click follows a prevented touch
+  if (!map._fullLayout) return;
+  gestureStart(e.touches);
+  gest.tap = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now(), target: e.target } : null;
+}, { capture: true, passive: false });
+map.addEventListener('touchmove', e => {
+  own(e);
+  if (!gest.start) return;
+  if (gest.tap && Math.hypot(e.touches[0].clientX - gest.tap.x, e.touches[0].clientY - gest.tap.y) < 10) return;
+  gest.tap = null;
+  gestureMove(e.touches);
+}, { capture: true, passive: false });
+const touchEnd = e => {
+  own(e);
+  if (e.touches.length) return gestureStart(e.touches);  // a finger lifted: go on with the rest from here
+  gest.start = null;
+  if (gest.tap && e.type === 'touchend' && Date.now() - gest.tap.t < 500) tapAt(gest.tap);
+  gest.tap = null;
+};
+map.addEventListener('touchend', touchEnd, { capture: true, passive: false });
+map.addEventListener('touchcancel', touchEnd, { capture: true, passive: false });
+
+const onLayoutChange = () => {
+  mobile = mq.matches;
+  if (panelKind === 'hint') showHint();
+  layoutSheet();
+};
+mq.addEventListener('change', onLayoutChange);
+side.addEventListener('change', () => layoutSheet());
+addEventListener('resize', () => layoutSheet());
+layoutSheet();
+
 if (byId[state.open]) showSpeech(byId[state.open]); else showHint();
 draw();
 if (TOURS[startTourId]) startTour(startTourId);
 map.on('plotly_relayouting', placeLabels);
-map.on('plotly_relayout', placeLabels);
+map.on('plotly_relayout', e => {
+  if (e['xaxis.autorange']) mapRange = null; else if ('xaxis.range[0]' in e || 'xaxis.range' in e) mapRange = ranges();  // uirevision alone let a zoom drift on redraw
+  placeLabels();
+});
 map.on('plotly_afterplot', placeLabels);
 window.addEventListener('resize', () => setTimeout(placeLabels, 50));
 const tip = document.getElementById('tip');
-map.on('plotly_hover', e => {
-  const s = byId[e.points[0].customdata], ev = e.event, r = map.getBoundingClientRect();
-  if (!s || !ev) return;
-  tip.innerHTML = `<div class="who">${dot(GROUPS.fraction.color(s.fraction))}${esc(s.speaker)} <span>${esc(s.fraction)}</span></div>
+function tipHtml(s, go = '') {
+  return `<div class="who">${dot(GROUPS.fraction.color(s.fraction))}${esc(s.speaker)} <span>${esc(s.fraction)}</span>${go}</div>
     <div class="when">${s.weekday} ${fmt(s.date)} · ${esc(s.top)}${s.role ? ' · ' + esc(s.role) : ''}</div>
     <div class="top">${esc(s.agenda.slice(0, 120))}</div>
     <div class="topic">${esc(clusterLabel(s.cluster))}</div>
     <div class="excerpt">${esc(s.text.slice(0, 400))}</div>`;
+}
+map.on('plotly_hover', e => {
+  const s = byId[e.points[0].customdata], ev = e.event, r = map.getBoundingClientRect();
+  if (!s || !ev) return;
+  tip.innerHTML = tipHtml(s);
   tip.style.display = 'block';
   flags.hovered = true; tourCheck();
   const x = Math.min(Math.max(ev.clientX - r.left, 160), r.width - 160), cy = ev.clientY - r.top;
@@ -712,8 +1019,8 @@ map.on('plotly_unhover', () => tip.style.display = 'none');
 map.addEventListener('mouseleave', () => tip.style.display = 'none');
 map.on('plotly_click', e => {
   const id = e.points[0].customdata;
-  if (id === state.open) { state.open = ''; showHint(); } else showSpeech(byId[id]);  // second click on the open speech closes it
-  draw();
+  if (id === state.open) return closeSpeech();  // second click on the open speech closes it
+  showSpeech(byId[id]); draw();
 });
 </script>
 </body>
